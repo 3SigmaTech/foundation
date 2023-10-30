@@ -20,7 +20,7 @@
     "scripts": {
         "pretest": "rm -rf build && mkdir build && rollup -c && cp build/foundation.js ./examples",
         "test": "tape 'test/**/*-test.js'",
-        "dev": "run-when-changed --watch \"src/*.js\" --exec \"rollup -c\" & browser-sync start --server --files \"examples/**/*\" \"build/*.*\"",
+        "dev": "run-when-changed --watch \"src/*.js\" --exec \"rollup -c && cp build/foundation.js examples/foundation.js \" & browser-sync start --server --files \"examples/**/*\" \"build/*.*\"",
         "prepublish": "npm run test && uglifyjs build/foundation.js -c -m -o build/foundation.min.js",
         "postpublish": "zip -j build/foundation.zip -- LICENSE README.md build/foundation.js build/foundation.min.js"
     },
