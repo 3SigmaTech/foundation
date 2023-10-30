@@ -1,0 +1,36 @@
+{
+    "name": "foundation",
+    "version": "0.0.1",
+    "description": "Renders pyramid-based framework descriptor",
+    "keywords": [
+        "framework",
+        "foundation",
+        "hierarchy",
+        "maslow"
+    ],
+    "license": "BSD-3-Clause",
+    "main": "build/foundation.js",
+    "jsnext:main": "index",
+    "type": "module",
+    "homepage": "https://github.com/3SigmaTech/foundation",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/3SigmaTech/foundation.git"
+    },
+    "scripts": {
+        "pretest": "rm -rf build && mkdir build && rollup -c && cp build/foundation.js ./examples",
+        "test": "tape 'test/**/*-test.js'",
+        "dev": "run-when-changed --watch \"src/*.js\" --exec \"rollup -c\" & browser-sync start --server --files \"examples/**/*\" \"build/*.*\"",
+        "prepublish": "npm run test && uglifyjs build/foundation.js -c -m -o build/foundation.min.js",
+        "postpublish": "zip -j build/foundation.zip -- LICENSE README.md build/foundation.js build/foundation.min.js"
+    },
+    "devDependencies": {
+        "browser-sync": "^2.27.12",
+        "rollup": "^3.18.0",
+        "@rollup/plugin-commonjs": "^24.0.1",
+        "@rollup/plugin-node-resolve": "^15.0.1",
+        "run-when-changed": "^2.1.0",
+        "tape": "^5.6.3",
+        "uglify-js": "^3.17.4"
+    }
+}

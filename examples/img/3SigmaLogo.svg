@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<svg
+    width="460"
+    height="460"
+    viewBox="0 0 460 460"
+    id="three-sigma-logo"
+    version="1.1"
+    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:svg="http://www.w3.org/2000/svg"
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:cc="http://creativecommons.org/ns#"
+    xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <defs id="defs">
+        <linearGradient id="3sigma-maincolor">
+            <stop stop-color="#000000" />
+        </linearGradient>
+        <filter id="glow">
+            <feFlood
+                flood-opacity="1"
+                flood-color="#09e3e3"
+                result="flood"
+                id="glowFlood" />
+            <feComposite
+                in="flood"
+                in2="SourceGraphic"
+                operator="in"
+                result="glowConstrained"
+                id="glowComposite" />
+            <feGaussianBlur
+                in="glowConstrained"
+                stdDeviation="10"
+                result="blur"
+                id="glowBlur" />
+            <feComposite
+                in="SourceGraphic"
+                in2="offset"
+                operator="over"
+                result="glowApplied"
+                id="glowApplication" />
+        </filter>
+    </defs>
+    <style>
+        #three-sigma-logo-elements circle {
+        fill-opacity:0;
+        stroke:url(#3sigma-maincolor);
+        stroke-width:30;
+        stroke-opacity:1;
+        }
+        #three-sigma-logo-elements path {
+        fill-opacity:0;
+        stroke:url(#3sigma-maincolor);
+        stroke-width:30;
+        }
+    </style>
+    <g id="three-sigma-logo-elements" style="filter:url(#glow)">
+        <circle r="100" cx="230" cy="130" />
+        <circle r="100" cx="330" cy="303" />
+        <circle r="100" cx="130" cy="303" />
+        <path
+            d="M 143.4 80 A 100 100 0 0 1 316.6 80 L 416.6 253 A 100 100 0 0 1 330 403 L 130 403 A 100 100 0 0 1 43.4 253 Z" />
+    </g>
+
+</svg>

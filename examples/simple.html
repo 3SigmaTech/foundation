@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Foundation</title>
+    <style>
+        @font-face {
+            font-family: "Capella";
+            src: url('./fonts/capella.ttf');
+        }
+        @font-face {
+            font-family: "Capella Expanded";
+            src: url('./fonts/capellaexpand.ttf');
+        }
+        @font-face {
+            font-family: "Iceland";
+            src: url('./fonts/iceland-regular.ttf');
+        }
+        @font-face {
+            font-family: "Quantico";
+            src: url('./fonts/quantico-regular.ttf');
+        }
+        @font-face {
+            font-family: "Nunito";
+            src: url('./fonts/nunito.ttf');
+        }
+        @page {
+            size: A2;
+            margin: 0;
+        }
+        @media print {
+            html, body {
+                width: 594mm;
+                height: 420mm;
+            }
+        }
+        html, body {
+                width: 594mm;
+                height: 420mm;
+                font-family: Nunito;
+                font-size: 0.95em;
+            }
+        svg text {
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+        svg > g > svg text {
+            text-anchor: unset;
+            dominant-baseline: unset;
+        }
+        svg div.context-body {
+            margin: 0.5em;
+        }
+        svg div.banner-context-body {
+            margin: 1em 0.5em 0.5em 0;
+            font-size: 0.8em;
+            color: #ffffff;
+        }
+        svg div.banner-context-body p {
+            margin: 0.5em;
+        }
+        svg ul {
+            margin-top: 0.25em;
+        }
+        svg p.title {
+            text-align: center;
+            text-decoration: underline;
+            font-weight: bold;
+            margin: 0;
+        }
+        svg div.two-col {
+            width: 49%;
+            font-size: 0.8em;
+        }
+        svg div.two-col:first-of-type {
+            float: left;
+            margin-right: 1%;
+        }
+        svg div.two-col:last-of-type {
+            float: right;
+            margin-left: 1%;
+        }
+        /* TEMP STYLING */
+        svg {
+            border:1px solid black;
+        }
+    </style>
+    <script src="../build/foundation.js"></script>
+
+    <script type="application/javascript">
+        function init() {
+            let sample = [
+                { label: "Transcendence", row: 2, contextWidth: 2, contextFile: './contexts/8-transcendence.html' },
+                { label: "Actualization", row: 2, contextWidth: 2, contextFile: './contexts/7-actualization.html' },
+                { label: "Aesthetic", row: 2, contextFile: './contexts/6-aesthetic.html' },
+                { label: "Cognitive", row: 2, contextFile: './contexts/5-cognitive.html' },
+                { label: "Esteem", contextWidth: 2.2, contextFile: './contexts/4-esteem.html' },
+                { label: "Belonging", contextFile: './contexts/3-belonging.html' },
+                { label: "Safety", contextFile: './contexts/2-safety.html' },
+                { label: "Physiological", contextFile: './contexts/1-physiological.html' }
+            ];
+
+            let opts = {
+                container: '#main',
+                title: {
+                    text: 'Hierarchy of Leadership',
+                    labelStyle: 'fill:#ffffff;stroke:#000000;stroke-width:0.25px;font-size:5em;font-family:Iceland;',
+                    //labelStyle: 'fill:#ffffff;text-shadow:1px 1px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;;font-size:4em;font-family:Nunito-R;',
+                    style: 'fill:#999999;'
+                },
+                leftContext: {
+                    width: 300,
+                    //html: '<img src="./img/3SigmaLogoCompact-Alternate.svg" width="100%" alt="3Sigma Logo">'
+                    //svg: '<image x="0" y="0" width="28" height="28" xlink:href="./img/3SigmaLogo-NoGlow-Alternate.svg" />'
+                    svgFile: './img/3SigmaLogoCompact-Alternate.svg'
+                },
+                rightContext: {
+                    width: 200,
+                    contextFile: './contexts/banner-right.html'
+                }
+            }
+            let billboard = foundation.render(sample, opts);
+        }
+    </script>
+</head>
+
+<body onload="init()">
+
+    <div class="container">
+        <svg id="main">
+            <defs>
+                <!-- inner-glow-i defined for each color as well -->
+                <filter id="inner-glow">
+                    <feFlood flood-color="white" />
+                    <feComposite operator="out" in2="SourceGraphic" />            
+                    <feGaussianBlur stdDeviation="5" />
+                    <feComposite operator="atop" in2="SourceGraphic" />
+                </filter>
+
+                <!-- faint-outer-glow-i defined for each color as well -->
+                <!-- as is outer-glow-i, which is a more colored glow -->
+                <filter id="faint-outer-glow">
+                    <feMorphology operator="dilate" radius="1" in="SourceAlpha" result="thicken" />
+                    <feGaussianBlur in="thicken" stdDeviation="3" result="blurred" />
+                    <feFlood flood-color="white" result="glowcolor" />
+                    <feComposite in="glowcolor" in2="blurred" operator="in" result="colored_glow" />
+                    <feMerge>
+                        <feMergeNode in="colored_glow" />
+                        <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                </filter>
+
+            </defs>
+
+        </svg>
+    </div>
+</body>
+
+</html>
