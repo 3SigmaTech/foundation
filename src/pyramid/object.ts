@@ -1,7 +1,19 @@
-import * as utils from './foundation-utils';
-import { mix_hexes_naive as mix_hexes } from './color-mixer';
+import type { PyramidData, FoundationOptions } from '../foundation-utils';
 
-export function generatePyramid(data, opts) {
+import * as utils from '../foundation-utils';
+import { mix_hexes_naive as mix_hexes } from '../color-mixer';
+import * as svgutils from '../svg-utils';
+
+export type PyramidObject = {
+    levels: number[][][];
+    labels: {
+        text: string;
+        x: number;
+        y: number;
+    }[];
+};
+
+export function generatePyramid(data: PyramidData, opts: FoundationOptions): PyramidObject {
 
     let padding = utils.getPadding(opts);
     let pH = utils.getPyramidHeight(opts);
@@ -17,14 +29,14 @@ export function generatePyramid(data, opts) {
 
     let lastL = p1;
     let lastR = p2;
-    for (let i = opts.numLevels - 1; i >= 0; i--) {
+    for (let i = opts.pyramidLevels - 1; i >= 0; i--) {
         let nextL = [
-            lastL[0] + (0.5 * pW / opts.numLevels),
-            lastL[1] - (pH / opts.numLevels)
+            lastL[0] + (0.5 * pW / opts.pyramidLevels),
+            lastL[1] - (pH / opts.pyramidLevels)
         ];
         let nextR = [
-            lastR[0] - (0.5 * pW / opts.numLevels),
-            lastR[1] - (pH / opts.numLevels)
+            lastR[0] - (0.5 * pW / opts.pyramidLevels),
+            lastR[1] - (pH / opts.pyramidLevels)
         ];
 
         levels.push([
@@ -33,7 +45,7 @@ export function generatePyramid(data, opts) {
 
 
         labels.push({
-            text: opts.labels[i],
+            text: data[i].label ?? '',
             x: p0[0],
             y: lastL[1] - 0.5 * (lastL[1] - nextL[1]),
         });
@@ -47,7 +59,7 @@ export function generatePyramid(data, opts) {
 }
 
 
-export function renderPyramid(pyramid, opts) {
+export function renderPyramid(pyramid:PyramidObject, opts:FoundationOptions) {
 
     let svg = utils.getSVG(opts);
 
@@ -76,29 +88,19 @@ export function renderPyramid(pyramid, opts) {
     }
 
     for (let i = 0; opts.showLabels && i < pyramid.labels.length; i++) {
-        let text = document.createElementNS("http://www.w3.org/2000/svg", 'text');
-        text.setAttribute('x', pyramid.labels[i].x);
-        text.setAttribute('y', pyramid.labels[i].y);
-        text.setAttribute('style', opts.labelStyle);
 
-        var textNode = document.createTextNode(pyramid.labels[i].text);
-        text.appendChild(textNode);
-
-        svg.appendChild(text);
-
-        SVGRect = text.getBBox();
-        let padding = utils.getPadding(opts);
-        let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-        rect.setAttribute("x", SVGRect.x - padding);
-        rect.setAttribute("y", SVGRect.y - padding);
-        rect.setAttribute("rx", padding);
-        rect.setAttribute("ry", padding);
-        rect.setAttribute("width", SVGRect.width + 2 * padding);
-        rect.setAttribute("height", SVGRect.height + 2 * padding);
-        rect.setAttribute("fill", `${mix_hexes(opts.colors[i], mix_hexes(opts.colors[i], "#000000"))}`);
+        let tBox = svgutils.drawContainedText({
+            svg: svg,
+            text: pyramid.labels[i].text,
+            x: pyramid.labels[i].x,
+            y: pyramid.labels[i].y,
+            textStyle: opts.labelStyle,
+            padding: utils.getPadding(opts)
+        });
+        tBox.background.setAttribute("fill", `${mix_hexes(opts.colors[i], mix_hexes(opts.colors[i], "#000000"))}`);
         if (!opts.useFlatColors) {
-            rect.setAttribute('filter', `url(#big-blur)`);
+            tBox.background.setAttribute('filter', `url(#big-blur)`);
         }
-        svg.insertBefore(rect, text);
+
     }
 }

@@ -7,17 +7,8 @@
     viewBox="0 0 460 460"
     id="three-sigma-logo"
     version="1.1"
-    sodipodi:docname="logo-updated.svg"
-    inkscape:export-filename="../../../../../../OneDrive - 3Sigma/3Sigma/Logos/PNG/Logo-250.png"
-    inkscape:export-xdpi="56.25"
-    inkscape:export-ydpi="56.25"
-    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
     xmlns="http://www.w3.org/2000/svg"
-    xmlns:svg="http://www.w3.org/2000/svg"
-    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-    xmlns:cc="http://creativecommons.org/ns#"
-    xmlns:dc="http://purl.org/dc/elements/1.1/">
+    xmlns:svg="http://www.w3.org/2000/svg">
     <defs id="defs">
         <linearGradient id="3sigma-maincolor">
             <stop stop-color="#09e3e3" />
@@ -26,28 +17,32 @@
             <feFlood
                 flood-opacity="0"
                 flood-color="#000000"
-                result="flood"
-                id="glowFlood" />
+                result="flood" />
             <feComposite
                 in="flood"
                 in2="SourceGraphic"
                 operator="in"
-                result="glowConstrained"
-                id="glowComposite" />
+                result="constrained" />
             <feGaussianBlur
-                in="glowConstrained"
+                in="constrained"
                 stdDeviation="10"
-                result="blur"
-                id="glowBlur" />
+                result="blur" />
             <feComposite
                 in="SourceGraphic"
-                in2="offset"
+                in2="blur"
                 operator="over"
-                result="glowApplied"
-                id="glowApplication" />
+                result="applied" />
         </filter>
     </defs>
     <style>
+        @font-face {
+        font-family: "Capella";
+        src: url('../fonts/capella.ttf');
+        }
+        @font-face {
+        font-family: "Capella Expanded";
+        src: url('../fonts/capellaexpand.ttf');
+        }
         #three-sigma-logo-elements circle {
         fill-opacity:0;
         stroke:url(#3sigma-maincolor);

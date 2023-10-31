@@ -17,28 +17,32 @@
             <feFlood
                 flood-opacity="1"
                 flood-color="#09e3e3"
-                result="flood"
-                id="glowFlood" />
+                result="flood" />
             <feComposite
                 in="flood"
                 in2="SourceGraphic"
                 operator="in"
-                result="glowConstrained"
-                id="glowComposite" />
+                result="constrained" />
             <feGaussianBlur
-                in="glowConstrained"
+                in="constrained"
                 stdDeviation="10"
-                result="blur"
-                id="glowBlur" />
+                result="blur" />
             <feComposite
                 in="SourceGraphic"
-                in2="offset"
+                in2="blur"
                 operator="over"
-                result="glowApplied"
-                id="glowApplication" />
+                result="applied" />
         </filter>
     </defs>
     <style>
+        @font-face {
+        font-family: "Capella";
+        src: url('/examples/fonts/capella.ttf');
+        }
+        @font-face {
+        font-family: "Capella Expanded";
+        src: url('/examples/fonts/capellaexpand.ttf');
+        }
         #three-sigma-logo-elements circle {
         fill-opacity:0;
         stroke:url(#3sigma-maincolor);
@@ -51,7 +55,7 @@
         stroke-width:30;
         }
     </style>
-    <g id="three-sigma-logo-elements" style="filter:url(#glow)" transform="scale(0.06086956522, 0.06086956522)">
+    <g id="three-sigma-logo-elements" filter="url(#glow)" transform="scale(0.06086956522, 0.06086956522)">
         <circle r="100" cx="230" cy="130" />
         <circle r="100" cx="330" cy="303" />
         <circle r="100" cx="130" cy="303" />
@@ -63,13 +67,13 @@
         style="fill:#000;stroke:#09e3e3;stroke-width:0.5px;font-size:27.3px;font-family:'Capella Expanded';"
         x="27"
         y="25"
-        id="name"
+        width="254"
+        height="25"
     >3Sigma</text>
 
     <text
-        style="fill:#000;stroke:#09e3e3;stroke-width:0.5px;font-size:20px;font-family:'Capella';"
-        x="-2"
+        style="fill:#000;stroke:#09e3e3;stroke-width:0.5px;font-size:19.9px;font-family:'Capella';"
+        x="0"
         y="38"
-        id="name"
     >Technologies</text>
 </svg>

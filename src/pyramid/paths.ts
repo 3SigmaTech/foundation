@@ -1,8 +1,12 @@
-import * as utils from './foundation-utils';
-import { mix_hexes_naive as mix_hexes } from './color-mixer';
+import type { FoundationOptions } from '../foundation-utils';
+import type { PyramidObject } from './object';
+import type { PyramidContext } from './context';
 
+import * as utils from '../foundation-utils';
 
-export function generatePaths(pyramid, context, opts) {
+export type PyramidPath = number[][];
+
+export function generatePaths(pyramid:PyramidObject, context:PyramidContext, opts:FoundationOptions):PyramidPath[] {
 
     let padding = utils.getPadding(opts);
     let pathGutter = utils.getPathGutter(opts);
@@ -10,7 +14,7 @@ export function generatePaths(pyramid, context, opts) {
     let bannerHeight = utils.getBannerHeight(opts);
 
     let paths = [];
-    for (let i = 0; i < opts.numLevels; i++) {
+    for (let i = 0; i < opts.pyramidLevels; i++) {
 
         let row = context.titles[i].row - 1;
 
@@ -21,7 +25,7 @@ export function generatePaths(pyramid, context, opts) {
 
         let p1 = [
             p0[0],
-            bannerHeight + padding + (opts.numLevels - i) * channel
+            bannerHeight + padding + (opts.pyramidLevels - i) * channel
         ];
 
 
@@ -43,13 +47,13 @@ export function generatePaths(pyramid, context, opts) {
         } else {
 
             let p2 = [
-                opts.width - padding - (opts.numLevels - i) * channel,
+                opts.width - padding - (opts.pyramidLevels - i) * channel,
                 p1[1]
             ];
 
             let p3 = [
                 p2[0],
-                context.titles[i].y - (opts.numLevels - i) * channel,
+                context.titles[i].y - (opts.pyramidLevels - i) * channel,
             ];
 
             let p4 = [
@@ -67,7 +71,7 @@ export function generatePaths(pyramid, context, opts) {
     return paths;
 }
 
-export function renderPaths(paths, opts) {
+export function renderPaths(paths:PyramidPath[], opts:FoundationOptions) {
 
     let svg = utils.getSVG(opts);
 

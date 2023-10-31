@@ -1,0 +1,37 @@
+{
+    "compilerOptions": {
+        "rootDir": "./src/",
+        "outDir": "./build/",
+        "target": "es2021",
+        "lib": ["es6", "dom", "es2017", "ES2021.String"],
+        "removeComments": true,
+        "allowJs": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "jsx": "preserve",
+        "module": "esnext",
+        "moduleResolution": "node",
+
+        "strict": true,
+        "allowUnusedLabels": false,
+        "allowUnreachableCode": false,
+        "exactOptionalPropertyTypes": true,
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitOverride": true,
+        "noImplicitReturns": true,
+        "noPropertyAccessFromIndexSignature": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+
+        "checkJs": false, // temp
+
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true
+    },
+    "include": [
+        "./src/**/*.ts",
+        "./src/**/*.js"
+    ],
+    "exclude": ["node_modules"]
+}
