@@ -4,12 +4,19 @@
     (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.foundation = {}));
 })(this, (function (exports) { 'use strict';
 
+    var _SVG = null;
     function getSVG(opts) {
-      let svg = document.querySelector(opts.container);
-      if (svg == null || svg == undefined) {
-        console.error('Container does not exist; creating one');
-        svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        document.appendChild(svg);
+      let svg;
+      if (_SVG == null) {
+        svg = document.querySelector(opts.container);
+        if (svg == null || svg == undefined) {
+          console.error('Container does not exist; creating one');
+          svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+          document.appendChild(svg);
+        }
+        _SVG = svg;
+      } else {
+        svg = _SVG;
       }
       return svg;
     }
@@ -111,7 +118,7 @@
       pathStr += getBottomRightRoundedNinety(opts.radii[2]);
       pathStr += `h-${opts.width - opts.radii[2] - opts.radii[3]} `;
       pathStr += getBottomLeftRoundedNinety(opts.radii[3]);
-      pathStr += `v-${opts.height - opts.radii[3] - opts.radii[0]} `;
+      pathStr += `v-${opts.height - opts.radii[3] - opts.radii[0]} Z`;
       return pathStr;
     }
     function getTopLeftRoundedNinety(radius) {
@@ -124,10 +131,20 @@
     }
     function getTopRightRoundedNinety(radius) {
       let clockwise = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
-      if (clockwise) {
-        return `q${radius},0 ${radius},${radius}`;
+      let shallow = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+      if (!shallow) {
+        if (clockwise) {
+          return `q${radius},0 ${radius},${radius}`;
+        } else {
+          return `q0,-${radius} -${radius},-${radius}`;
+        }
       } else {
-        return `q0,-${radius} -${radius},-${radius}`;
+        const m = 1;
+        if (clockwise) {
+          return `c ${m * radius},0 ${radius},${(1 - m) * radius} ${radius},${radius}`;
+        } else {
+          return `q0,-${radius} -${radius},-${radius}`;
+        }
       }
     }
     function getBottomLeftRoundedNinety(radius) {
@@ -207,13 +224,13 @@
           pointStr += ` ${pt[0]},${pt[1]}`;
         }
         let styleStr = 'stroke-width:1;';
-        styleStr += `fill:${opts.colors[i]};`;
-        styleStr += `stroke:${mix_hexes_naive(opts.colors[i], "#000000")};`;
+        styleStr += `fill:${opts.pyramidColors[i]};`;
+        styleStr += `stroke:${mix_hexes_naive(opts.pyramidColors[i], "#000000")};`;
         let poly = document.createElementNS("http://www.w3.org/2000/svg", 'polygon');
         poly.setAttribute('points', pointStr.trim());
         poly.setAttribute('style', styleStr);
         if (!opts.useFlatColors) {
-          poly.setAttribute('filter', `url(#inner-glow-${i})`);
+          poly.setAttribute('filter', `url(#inner-glow-pyramid-${i})`);
         }
         svg.appendChild(poly);
         poly = document.createElementNS("http://www.w3.org/2000/svg", 'polygon');
@@ -230,7 +247,7 @@
           textStyle: opts.labelStyle,
           padding: getPadding(opts)
         });
-        tBox.background.setAttribute("fill", `${mix_hexes_naive(opts.colors[i], mix_hexes_naive(opts.colors[i], "#000000"))}`);
+        tBox.background.setAttribute("fill", `${mix_hexes_naive(opts.pyramidColors[i], mix_hexes_naive(opts.pyramidColors[i], "#000000"))}`);
         if (!opts.useFlatColors) {
           tBox.background.setAttribute('filter', `url(#big-blur)`);
         }
@@ -260,7 +277,7 @@
       let bannerHeight = getBannerHeight(opts);
       let titles = [];
       let bodies = [];
-      let titleHeight = pathGutter;
+      let titleHeight = Math.min(pathGutter, opts.maxTitleHeight);
       let bodyHeight = pyramidHeight - pathGutter - titleHeight;
       let remainingPaths = opts.pyramidLevels;
       let titleTopLeft = [0, bannerHeight + padding + pathGutter];
@@ -278,7 +295,7 @@
         }
         let myPathGutter = remainingPaths * (pathGutter / opts.pyramidLevels);
         remainingPaths -= rowMeta.columns[r];
-        let pathVerticalGutter = r == rowMeta.width.length ? 0 : pathChannelWidth * wrappingPaths + padding;
+        let pathVerticalGutter = r == rowMeta.width.length ? 0 : pathChannelWidth * wrappingPaths;
         let contextWidth = (opts.width - padding - objectSpace - pathVerticalGutter) / rowMeta.width[r];
         if (r > 0) {
           titleTopLeft[1] += padding + myPathGutter + titleHeight + bodyHeight;
@@ -337,13 +354,13 @@
           radii: [padding, padding, 0, 0]
         });
         let styleStr = 'stroke-width:1;';
-        styleStr += `fill:${opts.colors[i]};`;
-        styleStr += `stroke:${mix_hexes_naive(opts.colors[i], "#000000")};`;
+        styleStr += `fill:${opts.pyramidColors[i]};`;
+        styleStr += `stroke:${mix_hexes_naive(opts.pyramidColors[i], "#000000")};`;
         let path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
         path.setAttribute('d', pathStr);
         path.setAttribute('style', styleStr);
         if (!opts.useFlatColors) {
-          path.setAttribute('filter', `url(#inner-glow-${i})`);
+          path.setAttribute('filter', `url(#inner-glow-pyramid-${i})`);
         }
         svg.appendChild(path);
         path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
@@ -358,7 +375,7 @@
           textStyle: opts.labelStyle,
           padding: getPadding(opts)
         });
-        tBox.background.setAttribute("fill", `${mix_hexes_naive(opts.colors[i], mix_hexes_naive(opts.colors[i], "#000000"))}`);
+        tBox.background.setAttribute("fill", `${mix_hexes_naive(opts.pyramidColors[i], mix_hexes_naive(opts.pyramidColors[i], "#000000"))}`);
         if (!opts.useFlatColors) {
           tBox.background.setAttribute('filter', `url(#big-blur)`);
         }
@@ -366,7 +383,7 @@
       for (let i = 0; i < context.bodies.length; i++) {
         let styleStr = 'stroke-width:1;';
         styleStr += `fill:none;`;
-        styleStr += `stroke:${mix_hexes_naive(opts.colors[i], "#000000")};`;
+        styleStr += `stroke:${mix_hexes_naive(opts.pyramidColors[i], "#000000")};`;
         let poly = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
         poly.setAttribute('x', context.bodies[i].x.toString());
         poly.setAttribute('y', context.bodies[i].y.toString());
@@ -403,7 +420,7 @@
           let p2 = [pEnd[0], p1[1]];
           paths.push([[...p0], [...p1], [...p2], [...pEnd]]);
         } else {
-          let p2 = [opts.width - padding - (opts.pyramidLevels - i) * channel, p1[1]];
+          let p2 = [opts.width - (opts.pyramidLevels - i) * channel, p1[1]];
           let p3 = [p2[0], context.titles[i].y - (opts.pyramidLevels - i) * channel];
           let p4 = [pEnd[0], p3[1]];
           paths.push([[...p0], [...p1], [...p2], [...p3], [...p4], [...pEnd]]);
@@ -421,33 +438,37 @@
         let width = getPathWidth(opts);
         let styleStr = `stroke-linejoin:round;fill:none;`;
         styleStr += `stroke-width:${width};`;
-        styleStr += `stroke:${opts.colors[i]};`;
+        styleStr += `stroke:${opts.pyramidColors[i]};`;
         let poly = document.createElementNS("http://www.w3.org/2000/svg", 'polyline');
         poly.setAttribute('points', pointStr.trim());
         poly.setAttribute('style', styleStr);
         if (!opts.useFlatColors) {
-          poly.setAttribute('filter', `url(#faint-outer-glow-${i})`);
+          poly.setAttribute('filter', `url(#faint-outer-glow-pyramid-${i})`);
         }
         svg.appendChild(poly);
       }
     }
 
     function renderFilters(opts, defelement) {
-      for (let i = 0; i < opts.colors.length; i++) {
-        let innerGlow = _createInnerGlow(i, opts.colors[i]);
+      for (let i = 0; i < opts.pyramidColors.length; i++) {
+        let innerGlow = _createInnerGlow(i, mix_hexes_naive('#ffffff', opts.pyramidColors[i]), 'pyramid');
         defelement.appendChild(innerGlow);
-        let faintOuterGlow = _createFaintOuterGlow(i, opts.colors[i]);
+        let faintOuterGlow = _createFaintOuterGlow(i, mix_hexes_naive('#ffffff', opts.pyramidColors[i]), 'pyramid');
         defelement.appendChild(faintOuterGlow);
-        let outerGlow = _createOuterGlow(i, opts.colors[i]);
-        defelement.appendChild(outerGlow);
+      }
+      for (let i = 0; i < opts.racewayColors.length; i++) {
+        let innerGlow = _createInnerGlow(i, mix_hexes_naive('#ffffff', opts.racewayColors[i]), 'raceway');
+        defelement.appendChild(innerGlow);
+        let faintOuterGlow = _createFaintOuterGlow(i, mix_hexes_naive('#ffffff', opts.racewayColors[i]), 'raceway');
+        defelement.appendChild(faintOuterGlow);
       }
       _appendOneOffs(opts, defelement);
     }
-    function _createInnerGlow(index, color) {
+    function _createInnerGlow(index, color, collection) {
       let innerGlow = document.createElementNS("http://www.w3.org/2000/svg", 'filter');
-      innerGlow.setAttribute('id', `inner-glow-${index}`);
+      innerGlow.setAttribute('id', `inner-glow-${collection}-${index}`);
       let filter = document.createElementNS("http://www.w3.org/2000/svg", 'feFlood');
-      filter.setAttribute('flood-color', mix_hexes_naive('#ffffff', color));
+      filter.setAttribute('flood-color', color);
       innerGlow.appendChild(filter);
       filter = document.createElementNS("http://www.w3.org/2000/svg", 'feComposite');
       filter.setAttribute('operator', 'out');
@@ -463,43 +484,9 @@
       innerGlow.appendChild(filter);
       return innerGlow;
     }
-    function _createFaintOuterGlow(index, color) {
+    function _createFaintOuterGlow(index, color, collection) {
       let outerGlow = document.createElementNS("http://www.w3.org/2000/svg", 'filter');
-      outerGlow.setAttribute('id', `faint-outer-glow-${index}`);
-      let feMorphology = document.createElementNS("http://www.w3.org/2000/svg", 'feMorphology');
-      feMorphology.setAttribute('operator', "dilate");
-      feMorphology.setAttribute('radius', "1");
-      feMorphology.setAttribute('in', "SourceAlpha");
-      feMorphology.setAttribute('result', "thicken");
-      outerGlow.appendChild(feMorphology);
-      let feGaussianBlur = document.createElementNS("http://www.w3.org/2000/svg", 'feGaussianBlur');
-      feGaussianBlur.setAttribute('in', 'thicken');
-      feGaussianBlur.setAttribute('stdDeviation', '3');
-      feGaussianBlur.setAttribute('result', 'blurred');
-      outerGlow.appendChild(feGaussianBlur);
-      let feFlood = document.createElementNS("http://www.w3.org/2000/svg", 'feFlood');
-      feFlood.setAttribute('flood-color', mix_hexes_naive('#ffffff', color));
-      feFlood.setAttribute('result', 'glowcolor');
-      outerGlow.appendChild(feFlood);
-      let feComposite = document.createElementNS("http://www.w3.org/2000/svg", 'feComposite');
-      feComposite.setAttribute('in', 'glowcolor');
-      feComposite.setAttribute('in2', 'blurred');
-      feComposite.setAttribute('operator', 'in');
-      feComposite.setAttribute('result', 'colored_glow');
-      outerGlow.appendChild(feComposite);
-      let feMerge = document.createElementNS("http://www.w3.org/2000/svg", 'feMerge');
-      let feMergeNode = document.createElementNS("http://www.w3.org/2000/svg", 'feMergeNode');
-      feMergeNode.setAttribute('in', 'colored_glow');
-      feMerge.appendChild(feMergeNode);
-      feMergeNode = document.createElementNS("http://www.w3.org/2000/svg", 'feMergeNode');
-      feMergeNode.setAttribute('in', 'SourceGraphic');
-      feMerge.appendChild(feMergeNode);
-      outerGlow.appendChild(feMerge);
-      return outerGlow;
-    }
-    function _createOuterGlow(index, color) {
-      let outerGlow = document.createElementNS("http://www.w3.org/2000/svg", 'filter');
-      outerGlow.setAttribute('id', `outer-glow-${index}`);
+      outerGlow.setAttribute('id', `faint-outer-glow-${collection}-${index}`);
       let feMorphology = document.createElementNS("http://www.w3.org/2000/svg", 'feMorphology');
       feMorphology.setAttribute('operator', "dilate");
       feMorphology.setAttribute('radius', "1");
@@ -620,6 +607,289 @@
       });
     }
 
+    function generateRaceway(data, opts, x0, y0) {
+      let padding = getPadding(opts);
+      let lastChevronOffset = -1 * (opts.racewayTitleHeight / 2 - opts.racewayChevronDepth);
+      let widthUnits = 0;
+      for (let i = 0; i < opts.racewayLevels; i++) {
+        widthUnits += data[i].contextWidth ?? 1;
+      }
+      let racewayHeight = opts.racewayTitleHeight;
+      let racewayWidth = opts.width - 2 * padding - 2 * racewayHeight;
+      let sectionWidth = racewayWidth / widthUnits;
+      let sectionHeight = opts.height - y0 - 2 * racewayHeight - padding;
+      let miterOffset = 0.5 / Math.sin(Math.atan(racewayHeight / (2 * opts.racewayChevronDepth)));
+      let sections = [];
+      let pt = [x0 + racewayHeight, y0];
+      for (let i = 0; i < opts.racewayLevels; i++) {
+        let myWidth = sectionWidth * (data[i].contextWidth ?? 1);
+        let pts = [];
+        pts.push([...pt]);
+        pt[0] += myWidth;
+        let nextP0 = [pt[0], pt[1]];
+        pts.push([...pt]);
+        pt[0] += opts.racewayChevronDepth;
+        pt[1] += racewayHeight / 2;
+        pts.push([...pt]);
+        pt[0] -= opts.racewayChevronDepth;
+        pt[1] += racewayHeight / 2;
+        pts.push([...pt]);
+        pt[0] -= myWidth;
+        pts.push([...pt]);
+        let bodypt = [...pt];
+        pt[0] += opts.racewayChevronDepth;
+        pt[1] -= racewayHeight / 2;
+        pts.push([...pt]);
+        if (i == data.length - 1) {
+          pts[1][0] -= lastChevronOffset;
+          pts[2][0] -= lastChevronOffset;
+          pts[3][0] -= lastChevronOffset;
+        }
+        if (i > 0) {
+          pts[0][0] += miterOffset;
+          pts[4][0] += miterOffset;
+          pts[5][0] += miterOffset;
+        }
+        pts[1][0] -= miterOffset;
+        pts[2][0] -= miterOffset;
+        pts[3][0] -= miterOffset;
+        sections.push({
+          text: data[i].label,
+          cx: pts[0][0] + (pts[2][0] - pts[0][0]) / 2,
+          cy: pts[1][1] + (pts[3][1] - pts[1][1]) / 2,
+          points: [...pts],
+          body: {
+            content: {
+              ...data[i].content
+            },
+            x: bodypt[0],
+            y: bodypt[1],
+            width: myWidth - 1,
+            height: sectionHeight
+          }
+        });
+        pt = [...nextP0];
+      }
+      let racetrackRadius = opts.racewayRadius;
+      let track = [];
+      pt = [opts.width - padding - racewayHeight - lastChevronOffset + (lastChevronOffset > 0 ? miterOffset : 0), y0];
+      track.push([...pt]);
+      pt[0] += lastChevronOffset + (racewayHeight - racetrackRadius);
+      track.push([...pt]);
+      pt[0] += racetrackRadius;
+      pt[1] += racetrackRadius;
+      track.push([...pt]);
+      pt[1] += sectionHeight + 2 * (racewayHeight - racetrackRadius);
+      track.push([...pt]);
+      pt[0] -= racetrackRadius;
+      pt[1] += racetrackRadius;
+      track.push([...pt]);
+      pt[0] = padding + racetrackRadius;
+      track.push([...pt]);
+      pt[0] -= racetrackRadius;
+      pt[1] -= racetrackRadius;
+      track.push([...pt]);
+      pt[1] -= sectionHeight + 2 * (racewayHeight - racetrackRadius);
+      track.push([...pt]);
+      pt[0] += racetrackRadius - 1;
+      pt[1] -= racetrackRadius;
+      track.push([...pt]);
+      pt[0] += racewayHeight - racetrackRadius;
+      track.push([...pt]);
+      pt[0] += opts.racewayChevronDepth;
+      pt[1] += racewayHeight / 2;
+      track.push([...pt]);
+      pt[0] -= opts.racewayChevronDepth;
+      pt[1] += racewayHeight / 2;
+      track.push([...pt]);
+      pt[1] += sectionHeight + 1;
+      track.push([...pt]);
+      pt[0] += racewayWidth + 1;
+      track.push([...pt]);
+      let wrapTop = 1;
+      if (lastChevronOffset == 0) {
+        wrapTop = 0;
+      }
+      pt[1] -= sectionHeight + 1 + wrapTop;
+      track.push([...pt]);
+      let insetMiterOffset = 1 / Math.tan(Math.atan(racewayHeight / (2 * opts.racewayChevronDepth)));
+      if (lastChevronOffset == 0) {
+        insetMiterOffset = 0;
+      }
+      if (lastChevronOffset > 0) {
+        pt[0] -= lastChevronOffset - miterOffset - insetMiterOffset;
+        track.push([...pt]);
+      }
+      pt[0] += opts.racewayChevronDepth - insetMiterOffset;
+      pt[1] -= racewayHeight / 2 - wrapTop;
+      track.push([...pt]);
+      let gradient = [];
+      let trackWidth = opts.width - 2 * padding;
+      let cumulativeDist = racewayHeight;
+      for (let i = 0; i < data.length; i++) {
+        cumulativeDist += 0.5 * sectionWidth * (data[i].contextWidth ?? 1);
+        gradient.push({
+          color: opts.racewayColors[i],
+          offset: 100 * (cumulativeDist / trackWidth)
+        });
+        cumulativeDist += 0.5 * sectionWidth * (data[i].contextWidth ?? 1);
+      }
+      return {
+        sections: sections,
+        track: track,
+        gradient: gradient
+      };
+    }
+    function renderRaceway(raceway, opts) {
+      let svg = getSVG(opts);
+      let padding = getPadding(opts);
+      let defs = svg.getElementsByTagNameNS("http://www.w3.org/2000/svg", 'defs')[0];
+      let linearGradient = document.createElementNS("http://www.w3.org/2000/svg", 'linearGradient');
+      linearGradient.setAttribute('id', `raceway-gradient`);
+      for (let i = 0; i < raceway.gradient.length; i++) {
+        let stop = document.createElementNS("http://www.w3.org/2000/svg", 'stop');
+        stop.setAttribute('stop-color', `${raceway.gradient[i].color}`);
+        stop.setAttribute('offset', `${raceway.gradient[i].offset}%`);
+        linearGradient.appendChild(stop);
+      }
+      defs.appendChild(linearGradient);
+      linearGradient = document.createElementNS("http://www.w3.org/2000/svg", 'linearGradient');
+      linearGradient.setAttribute('id', `raceway-gradient-light`);
+      for (let i = 0; i < raceway.gradient.length; i++) {
+        let stop = document.createElementNS("http://www.w3.org/2000/svg", 'stop');
+        stop.setAttribute('stop-color', `${mix_hexes_naive("#ffffff", mix_hexes_naive("#ffffff", raceway.gradient[i].color))}`);
+        stop.setAttribute('offset', `${raceway.gradient[i].offset}%`);
+        linearGradient.appendChild(stop);
+      }
+      defs.appendChild(linearGradient);
+      linearGradient = document.createElementNS("http://www.w3.org/2000/svg", 'linearGradient');
+      linearGradient.setAttribute('id', `raceway-gradient-dark`);
+      for (let i = 0; i < raceway.gradient.length; i++) {
+        let stop = document.createElementNS("http://www.w3.org/2000/svg", 'stop');
+        stop.setAttribute('stop-color', `${mix_hexes_naive("#000000", raceway.gradient[i].color)}`);
+        stop.setAttribute('offset', `${raceway.gradient[i].offset}%`);
+        linearGradient.appendChild(stop);
+      }
+      defs.appendChild(linearGradient);
+      let innerGlow = document.createElementNS("http://www.w3.org/2000/svg", 'filter');
+      innerGlow.setAttribute('id', `inner-glow-raceway`);
+      let filter = document.createElementNS("http://www.w3.org/2000/svg", 'feFlood');
+      filter.setAttribute('flood-color', 'url(#raceway-gradient-light)');
+      innerGlow.appendChild(filter);
+      filter = document.createElementNS("http://www.w3.org/2000/svg", 'feComposite');
+      filter.setAttribute('operator', 'out');
+      filter.setAttribute('in2', 'SourceGraphic');
+      innerGlow.appendChild(filter);
+      filter = document.createElementNS("http://www.w3.org/2000/svg", 'feGaussianBlur');
+      filter.setAttribute('stdDeviation', '10');
+      filter.setAttribute('in2', 'SourceGraphic');
+      innerGlow.appendChild(filter);
+      filter = document.createElementNS("http://www.w3.org/2000/svg", 'feComposite');
+      filter.setAttribute('operator', 'atop');
+      filter.setAttribute('in2', 'SourceGraphic');
+      innerGlow.appendChild(filter);
+      defs.appendChild(innerGlow);
+      for (let i = raceway.sections.length - 1; i >= 0; i--) {
+        let styleStr = 'stroke-width:1;';
+        styleStr += `fill:none;`;
+        styleStr += `stroke:${mix_hexes_naive(opts.racewayColors[i], "#000000")};`;
+        let poly = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
+        poly.setAttribute('x', raceway.sections[i].body.x.toString());
+        poly.setAttribute('y', raceway.sections[i].body.y.toString());
+        poly.setAttribute('width', raceway.sections[i].body.width.toString());
+        poly.setAttribute('height', raceway.sections[i].body.height.toString());
+        poly.setAttribute('style', styleStr);
+        svg.appendChild(poly);
+        embedContent({
+          x: raceway.sections[i].body.x + 0.5 * padding,
+          y: raceway.sections[i].body.y + 0.5 * padding,
+          width: raceway.sections[i].body.width - 1,
+          height: raceway.sections[i].body.height,
+          svg: svg,
+          content: {
+            ...raceway.sections[i].body.content
+          },
+          contextId: `racewayContext-${i}`
+        });
+        styleStr = 'stroke-width:1;';
+        styleStr += `fill:${opts.racewayColors[i]};`;
+        styleStr += `stroke:${mix_hexes_naive(opts.racewayColors[i], "#000000")};`;
+        styleStr += `stroke-miterlimit:10;`;
+        let pathStr = `M ${raceway.sections[i].points[0][0]} ${raceway.sections[i].points[0][1]} `;
+        for (let j = 1; j < raceway.sections[i].points.length; j++) {
+          pathStr += `L ${raceway.sections[i].points[j][0]} ${raceway.sections[i].points[j][1]} `;
+        }
+        pathStr += 'Z';
+        let path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
+        path.setAttribute('d', pathStr);
+        path.setAttribute('style', styleStr);
+        if (!opts.useFlatColors) {
+          path.setAttribute('filter', `url(#inner-glow-raceway-${i})`);
+        }
+        svg.appendChild(path);
+        styleStr = 'stroke-width:1;';
+        styleStr += `fill:none;`;
+        styleStr += `stroke:${mix_hexes_naive(opts.racewayColors[i], "#000000")};`;
+        styleStr += `stroke-miterlimit:10;`;
+        path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
+        path.setAttribute('d', pathStr);
+        path.setAttribute('style', styleStr);
+        svg.appendChild(path);
+        let tBox = drawContainedText({
+          svg: svg,
+          text: raceway.sections[i].text,
+          x: raceway.sections[i].cx,
+          y: raceway.sections[i].cy,
+          textStyle: opts.labelStyle,
+          padding: getPadding(opts)
+        });
+        tBox.background.setAttribute("fill", `${mix_hexes_naive(opts.racewayColors[i], mix_hexes_naive(opts.racewayColors[i], "#000000"))}`);
+        if (!opts.useFlatColors) {
+          tBox.background.setAttribute('filter', `url(#big-blur)`);
+        }
+      }
+      let racetrackRadius = opts.racewayRadius;
+      let pathStr = `M ${raceway.track[0][0]} ${raceway.track[0][1]} `;
+      for (let j = 1; j < raceway.track.length; j++) {
+        if (j == 2) {
+          pathStr += getTopRightRoundedNinety(racetrackRadius);
+        }
+        if (j == 4) {
+          pathStr += getBottomRightRoundedNinety(racetrackRadius);
+        }
+        if (j == 6) {
+          pathStr += getBottomLeftRoundedNinety(racetrackRadius);
+        }
+        if (j == 8) {
+          pathStr += getTopLeftRoundedNinety(racetrackRadius);
+        } else {
+          pathStr += `L ${raceway.track[j][0]} ${raceway.track[j][1]} `;
+        }
+      }
+      pathStr += 'Z';
+      let styleStr = 'stroke-width:0;';
+      styleStr += `fill:url(#raceway-gradient);`;
+      styleStr += `stroke:${mix_hexes_naive('#999999', "#000000")};`;
+      styleStr += `stroke-miterlimit:10;`;
+      let path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
+      path.setAttribute('d', pathStr);
+      path.setAttribute('style', styleStr);
+      path.setAttribute('id', 'raceway-track');
+      if (!opts.useFlatColors) {
+        path.setAttribute('filter', 'url(#simple-blur)');
+      }
+      svg.appendChild(path);
+      styleStr = 'stroke-width:1;';
+      styleStr += `fill:none;`;
+      styleStr += `stroke:url(#raceway-gradient-dark);`;
+      styleStr += `stroke-miterlimit:10;`;
+      path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
+      path.setAttribute('d', pathStr);
+      path.setAttribute('style', styleStr);
+      path.setAttribute('id', 'raceway-track-stroke');
+      svg.appendChild(path);
+    }
+
     function render(data, opts) {
       return _render(data, opts);
     }
@@ -632,55 +902,73 @@
         showBanner: true,
         width: 2245,
         height: 1587,
+        padding: 5,
         pyramidWidth: 450,
         pyramidHeight: 500,
         bannerHeight: 90,
-        padding: 5,
+        maxTitleHeight: 50,
+        pyramidColors: ["#f032e6", "#42d4f4", "#00ff00", "#f58231", "#4363d8", "#e6194B", "#009933", "#6600ff", '#006400', '#ff0000', '#00ced1', '#ffa500', '#98fb98', '#ff00ff', '#6495ed', '#000080', '#ffdab9'],
         pyramidLevels: 0,
+        racewayOffset: 20,
+        racewayTitleHeight: 50,
+        racewaySpinnerHeight: 0,
+        racewaySpinnerWidth: 0,
+        racewayChevronDepth: 25,
+        racewayRadius: 15,
+        racewayColors: ['#2f4f4f', '#00ced1', '#c71585', '#00cc00', '#0000ff'],
+        racewayLevels: 0,
         showLabels: true,
-        labelStyle: "fill:#ffffff;stroke:#000000;stroke-width:0.25px;",
-        colors: ["#f032e6", "#42d4f4", "#00cc00", "#f58231", "#4363d8", "#e6194B", "#009933", "#6600ff"],
+        labelStyle: "fill:#ffffff;stroke:#000000;stroke-width:0px;",
         useFlatColors: false
       };
     }
-    function _render(data, opts) {
-      let privateOpts;
-      if (opts !== undefined) {
-        privateOpts = {
-          ...opts
+    function _render(input_data, input_opts) {
+      let opts;
+      if (input_opts !== undefined) {
+        opts = {
+          ...input_opts
         };
       } else {
-        privateOpts = _defaultOpts();
+        opts = _defaultOpts();
       }
-      _applyDefaultOptions(privateOpts);
-      let privateData = _validateData(data);
-      if (privateData == null) {
+      _applyDefaultOptions(opts);
+      let data = _validateData(input_data);
+      if (data == null) {
         return;
       }
-      privateOpts.pyramidLevels = privateData.pyramid.length;
-      let oErrMsg = _validateOptions(privateOpts);
+      opts.pyramidLevels = data.pyramid.length;
+      opts.racewayLevels = data.raceway.length;
+      let oErrMsg = _validateOptions(opts);
       if (oErrMsg) {
         console.error(oErrMsg);
         return;
       }
-      let svg = getSVG(privateOpts);
-      svg.setAttribute('width', privateOpts.width.toString());
-      svg.setAttribute('height', privateOpts.height.toString());
-      _renderDefs(privateOpts);
-      if (privateOpts.showBanner) {
-        renderBanner(privateOpts);
+      let svg = getSVG(opts);
+      svg.setAttribute('width', opts.width.toString());
+      svg.setAttribute('height', opts.height.toString());
+      _renderDefs(opts);
+      if (opts.showBanner) {
+        renderBanner(opts);
       }
-      let pyramid = generatePyramid(privateData.pyramid, privateOpts);
-      let context = generateContext(privateData.pyramid, privateOpts);
-      let paths = generatePaths(pyramid, context, privateOpts);
-      if (paths) {
-        renderPaths(paths, privateOpts);
+      let pyramidObj = generatePyramid(data.pyramid, opts);
+      let pyramidContext = generateContext(data.pyramid, opts);
+      let pyramidPaths = generatePaths(pyramidObj, pyramidContext, opts);
+      if (pyramidPaths) {
+        renderPaths(pyramidPaths, opts);
       }
-      if (pyramid) {
-        renderPyramid(pyramid, privateOpts);
+      if (pyramidObj) {
+        renderPyramid(pyramidObj, opts);
       }
-      if (context) {
-        renderContext(context, privateOpts);
+      if (pyramidContext) {
+        renderContext(pyramidContext, opts);
+      }
+      let padding = getPadding(opts);
+      let x0 = padding;
+      let lastPContext = pyramidContext.bodies[pyramidContext.bodies.length - 1];
+      let y0 = lastPContext.y + lastPContext.height + padding + opts.racewayOffset;
+      let raceway = generateRaceway(data.raceway, opts, x0, y0);
+      if (raceway) {
+        renderRaceway(raceway, opts);
       }
     }
     function _applyDefaultOptions(opts) {
@@ -709,9 +997,15 @@
     }
     function _renderDefs(opts) {
       let svg = getSVG(opts);
-      let defs = document.createElementNS("http://www.w3.org/2000/svg", 'defs');
-      svg.appendChild(defs);
-      renderFilters(opts, defs);
+      let defs = svg.getElementsByTagNameNS("http://www.w3.org/2000/svg", 'defs');
+      let defTag;
+      if (defs.length > 0) {
+        defTag = defs[0];
+      } else {
+        defTag = document.createElementNS("http://www.w3.org/2000/svg", 'defs');
+        svg.appendChild(defTag);
+      }
+      renderFilters(opts, defTag);
     }
 
     exports.render = render;

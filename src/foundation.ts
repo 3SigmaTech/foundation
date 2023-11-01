@@ -6,6 +6,7 @@ import { generateContext, renderContext } from './pyramid/context';
 import { generatePaths, renderPaths } from './pyramid/paths';
 import { renderFilters } from './foundation-filters';
 import { renderBanner } from './foundation-banner';
+import { generateRaceway, renderRaceway } from './raceway/object';
 
 export function render(data:FoundationData, opts: FoundationOptions) {
   return _render(data, opts);
@@ -20,11 +21,65 @@ function _defaultOpts():FoundationOptions {
         showBanner: true,
         width: 2245, // 594mm --> A2 Paper Size
         height: 1587, // 420mm
+        padding: 5,
+
         pyramidWidth: 450,
         pyramidHeight: 500,
         bannerHeight: 90,
-        padding: 5,
+        maxTitleHeight: 50,
+        pyramidColors: [
+            "#f032e6",
+            "#42d4f4",
+            "#00ff00",
+            "#f58231",
+            "#4363d8",
+            "#e6194B",
+            "#009933",
+            "#6600ff",
+            //darkgreen
+            '#006400',
+            //red
+            '#ff0000',
+            //darkturquoise
+            '#00ced1',
+            //orange
+            '#ffa500',
+            //palegreen
+            '#98fb98',
+            //yellow
+            //'#ffff00',
+            //fuchsia
+            '#ff00ff',
+            //cornflower
+            '#6495ed',
+            //navy
+            '#000080',
+            //peachpuff
+            '#ffdab9'
+        ],
         pyramidLevels: 0,
+
+        racewayOffset: 20,
+        racewayTitleHeight: 50,
+        racewaySpinnerHeight: 0,
+        racewaySpinnerWidth: 0,
+        racewayChevronDepth: 25,
+        racewayRadius: 15,
+        racewayColors: [
+            //darkslategray
+            '#2f4f4f',
+            //darkturquoise
+            '#00ced1',
+            //mediumvioletred
+            '#c71585',
+            //green
+            '#00cc00',
+            //blue
+            '#0000ff',
+
+        ],
+        racewayLevels: 0,
+
         // tooltip: true,
         // tooltipCallbackRenderer: _defaultTooltipCallbackRenderer /*  */,
         // click: true,
@@ -32,55 +87,64 @@ function _defaultOpts():FoundationOptions {
         // hover: true,
         // hoverCallbackRenderer: _defaultHoverCallbackRenderer /*  */,
         showLabels: true,
-        labelStyle: "fill:#ffffff;stroke:#000000;stroke-width:0.25px;",
-        colors: ["#f032e6", "#42d4f4", "#00cc00", "#f58231", "#4363d8", "#e6194B", "#009933", "#6600ff"],
+        labelStyle: "fill:#ffffff;stroke:#000000;stroke-width:0px;",
         useFlatColors: false
     };
 }
 
-function _render(data:FoundationData, opts:FoundationOptions) {
-    let privateOpts:FoundationOptions;
-    if (opts !== undefined) {
-        privateOpts = {...opts};
+function _render(input_data:FoundationData, input_opts:FoundationOptions) {
+    let opts:FoundationOptions;
+    if (input_opts !== undefined) {
+        opts = {...input_opts};
     } else {
-        privateOpts = _defaultOpts();
+        opts = _defaultOpts();
     }
-    _applyDefaultOptions(privateOpts);
+    _applyDefaultOptions(opts);
 
-    let privateData = _validateData(data, privateOpts);
-    if (privateData == null) { return; }
+    let data = _validateData(input_data, opts);
+    if (data == null) { return; }
 
-    privateOpts.pyramidLevels = privateData.pyramid.length;
+    opts.pyramidLevels = data.pyramid.length;
+    opts.racewayLevels = data.raceway.length;
     
-    let oErrMsg = _validateOptions(privateOpts);
+    let oErrMsg = _validateOptions(opts);
     if (oErrMsg) { console.error(oErrMsg); return; }
     
-    let svg = utils.getSVG(privateOpts);
-    svg.setAttribute('width', privateOpts.width.toString());
-    svg.setAttribute('height', privateOpts.height.toString());
-    _renderDefs(privateOpts);
+    let svg = utils.getSVG(opts);
+    svg.setAttribute('width', opts.width.toString());
+    svg.setAttribute('height', opts.height.toString());
+    _renderDefs(opts);
 
-    if (privateOpts.showBanner) {
-        renderBanner(privateOpts);
+    if (opts.showBanner) {
+        renderBanner(opts);
     }
 
-    let pyramid = generatePyramid(privateData.pyramid, privateOpts);
-    let context = generateContext(privateData.pyramid, privateOpts);
-    let paths = generatePaths(pyramid, context, privateOpts);
+    let pyramidObj = generatePyramid(data.pyramid, opts);
+    let pyramidContext = generateContext(data.pyramid, opts);
+    let pyramidPaths = generatePaths(pyramidObj, pyramidContext, opts);
 
     // Render before pyramid for clean interface with pyramid's side
-    if (paths) {
-        renderPaths(paths, privateOpts);
+    if (pyramidPaths) {
+        renderPaths(pyramidPaths, opts);
     }
 
-    if (pyramid) {
-        renderPyramid(pyramid, privateOpts);
+    if (pyramidObj) {
+        renderPyramid(pyramidObj, opts);
     }
 
-    if (context) {
-        renderContext(context, privateOpts);
+    if (pyramidContext) {
+        renderContext(pyramidContext, opts);
     }
 
+    let padding = utils.getPadding(opts);
+    let x0 = padding;
+    let lastPContext = pyramidContext.bodies[pyramidContext.bodies.length - 1];
+    let y0 = lastPContext.y + lastPContext.height + padding + opts.racewayOffset;
+
+    let raceway = generateRaceway(data.raceway, opts, x0, y0);
+    if (raceway) {
+        renderRaceway(raceway, opts);
+    }
 }
 
 function _applyDefaultOptions(opts:FoundationOptions) {
@@ -112,10 +176,15 @@ function _validateOptions(opts:FoundationOptions):string|null {
 function _renderDefs(opts:FoundationOptions):void {
 
     let svg = utils.getSVG(opts);
+    let defs = svg.getElementsByTagNameNS("http://www.w3.org/2000/svg", 'defs');
+    let defTag;
+    if (defs.length > 0) {
+        defTag = defs[0];
+    } else {
+        defTag = document.createElementNS("http://www.w3.org/2000/svg", 'defs');
+        svg.appendChild(defTag);
+    }
 
-    let defs = document.createElementNS("http://www.w3.org/2000/svg", 'defs');
-    svg.appendChild(defs);
-
-    renderFilters(opts, defs);
+    renderFilters(opts, defTag);
 
 }

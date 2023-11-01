@@ -6,11 +6,14 @@ export type PyramidData = {
     content?: FoundationContent;
 }[];
 export type RacewayData = {
-    [index:string]:any;
-}
+    label: string;
+    contextWidth?: number;
+    content?: FoundationContent;
+    [index: string]: any;
+}[];
 export type FoundationData = {
     pyramid: PyramidData;
-    raceway: RacewayData
+    raceway: RacewayData;
 }
 
 export type FoundationContent = {
@@ -43,11 +46,22 @@ export type FoundationOptions = {
     showBanner: boolean;
     width: number;
     height: number;
+    padding: number;
     pyramidWidth: number;
     pyramidHeight: number;
     bannerHeight: number;
-    padding: number;
+    pyramidColors: string[];
+    maxTitleHeight: number;
     pyramidLevels: number; // set automatically
+
+    racewayOffset: number;
+    racewayTitleHeight: number;
+    racewaySpinnerHeight: number;
+    racewaySpinnerWidth: number;
+    racewayChevronDepth: number;
+    racewayRadius: number;
+    racewayColors: string[];
+    racewayLevels: number; // set automatically
     //tooltip: boolean;
     //tooltipCallbackRenderer: _defaultTooltipCallbackRenderer /*  */,
     //click: boolean;
@@ -56,17 +70,23 @@ export type FoundationOptions = {
     //hoverCallbackRenderer: _defaultHoverCallbackRenderer /*  */,
     showLabels: boolean;
     labelStyle: string;
-    colors: string[];
     useFlatColors: boolean;
     [index: string]: any;
 };
 
+var _SVG:Element|null = null;
 export function getSVG(opts:FoundationOptions):Element {
-    let svg = document.querySelector(opts.container);
-    if (svg == null || svg == undefined) {
-        console.error('Container does not exist; creating one');
-        svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        document.appendChild(svg);
+    let svg:Element|null;
+    if (_SVG == null) {
+        svg = document.querySelector(opts.container);
+        if (svg == null || svg == undefined) {
+            console.error('Container does not exist; creating one');
+            svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            document.appendChild(svg);
+        }
+        _SVG = svg;
+    } else {
+        svg = _SVG;
     }
     return svg;
 }

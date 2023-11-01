@@ -47,7 +47,7 @@ export function generatePaths(pyramid:PyramidObject, context:PyramidContext, opt
         } else {
 
             let p2 = [
-                opts.width - padding - (opts.pyramidLevels - i) * channel,
+                opts.width - (opts.pyramidLevels - i) * channel,
                 p1[1]
             ];
 
@@ -86,13 +86,13 @@ export function renderPaths(paths:PyramidPath[], opts:FoundationOptions) {
         let styleStr = `stroke-linejoin:round;fill:none;`;
         styleStr += `stroke-width:${width};`;
         //styleStr += `stroke:${mix_hexes(opts.colors[i], "#000000")};`;
-        styleStr += `stroke:${opts.colors[i]};`;
+        styleStr += `stroke:${opts.pyramidColors[i]};`;
 
         let poly = document.createElementNS("http://www.w3.org/2000/svg", 'polyline');
         poly.setAttribute('points', pointStr.trim());
         poly.setAttribute('style', styleStr);
         if (!opts.useFlatColors) {
-            poly.setAttribute('filter', `url(#faint-outer-glow-${i})`);
+            poly.setAttribute('filter', `url(#faint-outer-glow-pyramid-${i})`);
         }
         svg.appendChild(poly);
     }

@@ -54,7 +54,7 @@ export function generateContext(data:PyramidData, opts:FoundationOptions):Pyrami
     let titles = [];
     let bodies = [];
     
-    let titleHeight = pathGutter;
+    let titleHeight = Math.min(pathGutter, opts.maxTitleHeight);
     let bodyHeight = pyramidHeight - pathGutter - titleHeight;
     
     let remainingPaths = opts.pyramidLevels;
@@ -79,7 +79,7 @@ export function generateContext(data:PyramidData, opts:FoundationOptions):Pyrami
         let myPathGutter = remainingPaths * (pathGutter / opts.pyramidLevels);
         remainingPaths -= rowMeta.columns[r];
 
-        let pathVerticalGutter = (r == rowMeta.width.length ? 0 : pathChannelWidth * wrappingPaths + padding);
+        let pathVerticalGutter = (r == rowMeta.width.length ? 0 : pathChannelWidth * wrappingPaths);
         
         let contextWidth = (opts.width - padding - objectSpace - pathVerticalGutter) / rowMeta.width[r];
 
@@ -149,17 +149,18 @@ export function renderContext(context:PyramidContext, opts:FoundationOptions) {
         });
 
         let styleStr = 'stroke-width:1;';
-        styleStr += `fill:${opts.colors[i]};`;
-        styleStr += `stroke:${mix_hexes(opts.colors[i], "#000000")};`;
+        styleStr += `fill:${opts.pyramidColors[i]};`;
+        styleStr += `stroke:${mix_hexes(opts.pyramidColors[i], "#000000")};`;
 
         let path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
         path.setAttribute('d', pathStr);
         path.setAttribute('style', styleStr);
         if (!opts.useFlatColors) {
-            path.setAttribute('filter', `url(#inner-glow-${i})`);
+            path.setAttribute('filter', `url(#inner-glow-pyramid-${i})`);
         }
         svg.appendChild(path);
 
+        // Re-render path to get dark stroke (which is affected by filter on first path)
         path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
         path.setAttribute('d', pathStr);
         path.setAttribute('style', styleStr += 'fill:none;');
@@ -173,7 +174,7 @@ export function renderContext(context:PyramidContext, opts:FoundationOptions) {
             textStyle: opts.labelStyle,
             padding: utils.getPadding(opts)
         });
-        tBox.background.setAttribute("fill", `${mix_hexes(opts.colors[i], mix_hexes(opts.colors[i], "#000000"))}`);
+        tBox.background.setAttribute("fill", `${mix_hexes(opts.pyramidColors[i], mix_hexes(opts.pyramidColors[i], "#000000"))}`);
         if (!opts.useFlatColors) {
             tBox.background.setAttribute('filter', `url(#big-blur)`);
         }
@@ -184,7 +185,7 @@ export function renderContext(context:PyramidContext, opts:FoundationOptions) {
 
         let styleStr = 'stroke-width:1;';
         styleStr += `fill:none;`;
-        styleStr += `stroke:${mix_hexes(opts.colors[i], "#000000")};`;
+        styleStr += `stroke:${mix_hexes(opts.pyramidColors[i], "#000000")};`;
 
         let poly = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
         poly.setAttribute('x', context.bodies[i].x.toString());

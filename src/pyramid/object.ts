@@ -70,14 +70,14 @@ export function renderPyramid(pyramid:PyramidObject, opts:FoundationOptions) {
         }
 
         let styleStr = 'stroke-width:1;';
-        styleStr += `fill:${opts.colors[i]};`;
-        styleStr += `stroke:${mix_hexes(opts.colors[i], "#000000")};`;
+        styleStr += `fill:${opts.pyramidColors[i]};`;
+        styleStr += `stroke:${mix_hexes(opts.pyramidColors[i], "#000000")};`;
 
         let poly = document.createElementNS("http://www.w3.org/2000/svg", 'polygon');
         poly.setAttribute('points', pointStr.trim());
         poly.setAttribute('style', styleStr);
         if (!opts.useFlatColors) {
-            poly.setAttribute('filter', `url(#inner-glow-${i})`);
+            poly.setAttribute('filter', `url(#inner-glow-pyramid-${i})`);
         }
         svg.appendChild(poly);
 
@@ -97,7 +97,7 @@ export function renderPyramid(pyramid:PyramidObject, opts:FoundationOptions) {
             textStyle: opts.labelStyle,
             padding: utils.getPadding(opts)
         });
-        tBox.background.setAttribute("fill", `${mix_hexes(opts.colors[i], mix_hexes(opts.colors[i], "#000000"))}`);
+        tBox.background.setAttribute("fill", `${mix_hexes(opts.pyramidColors[i], mix_hexes(opts.pyramidColors[i], "#000000"))}`);
         if (!opts.useFlatColors) {
             tBox.background.setAttribute('filter', `url(#big-blur)`);
         }

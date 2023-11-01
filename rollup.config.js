@@ -16,13 +16,13 @@ let base = {
     //input: './build/foundation.js',
     output: {
         format: 'umd',
-        name: 'index'
+        name: 'index',
     },
     plugins: [
-        resolve({ extensions: ['.js', '.jsx', '.ts', '.tsx'] }),
-        commonjs({
-            include: /node_modules/
-        }),
+        resolve({ extensions: ['.js', '.jsx', '.ts', '.tsx'], jsnext: true }),
+        // commonjs({
+        //     include: /node_modules/
+        // }),
         json(),
         babel({
             extensions: ['.js', '.jsx', '.ts', '.tsx'],
@@ -37,7 +37,9 @@ let base = {
 };
 
 let build = Object.assign({ ...base }, {
-    output: { file: './build/foundation.js', format:'umd', name:'foundation' },
+    output: {
+        file: './build/foundation.js', format:'umd', name:'foundation',
+    },
     plugins: [...base.plugins, typescript({
         tsconfig: `./tsconfig.json`,
     })]

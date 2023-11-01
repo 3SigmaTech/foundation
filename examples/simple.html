@@ -117,63 +117,78 @@
                         label: "Transcendence",
                         row: 2, contextWidth: 2,
                         content: {
-                            htmlFile: './contexts/8-transcendence.html'
+                            htmlFile: './pyramid-contexts/8-transcendence.html'
                         }
                     },{
                         label: "Actualization",
                         row: 2, contextWidth: 2,
                         content: {
-                            htmlFile: './contexts/7-actualization.html'
+                            htmlFile: './pyramid-contexts/7-actualization.html'
                         }
                     },{
                         label: "Aesthetic",
                         row: 2,
                         content: {
-                            htmlFile: './contexts/6-aesthetic.html'
+                            htmlFile: './pyramid-contexts/6-aesthetic.html'
                         }
                     },{
                         label: "Cognitive",
                         row: 2,
                         content: {
-                            htmlFile: './contexts/5-cognitive.html'
+                            htmlFile: './pyramid-contexts/5-cognitive.html'
                         }
                     },{
                         label: "Esteem",
                         contextWidth: 2.2,
                         content: {
-                            htmlFile: './contexts/4-esteem.html'
+                            htmlFile: './pyramid-contexts/4-esteem.html'
                         }
                     },{
                         label: "Belonging",
                         content: {
-                            htmlFile: './contexts/3-belonging.html'
+                            htmlFile: './pyramid-contexts/3-belonging.html'
                         }
                     },{
                         label: "Safety",
                         content: {
-                            htmlFile: './contexts/2-safety.html'
+                            htmlFile: './pyramid-contexts/2-safety.html'
                         }
                     },{
                         label: "Physiological",
                         content: {
-                            htmlFile: './contexts/1-physiological.html'
+                            htmlFile: './pyramid-contexts/1-physiological.html'
                         }
                     }
                 ],
                 raceway: [
                     {
-                        label: "Observe"
+                        label: "Observe",
+                        contextWidth: 1,
+                        content: {
+                            htmlFile: './raceway-contexts/1-observe.html'
+                        }
                     },{
-                        label: "Orient"
+                        label: "Orient",
+                        content: {
+                            htmlFile: './raceway-contexts/2-orient.html'
+                        }
                     },{
-                        label: "Decide"
+                        label: "Decide",
+                        content: {
+                            htmlFile: './raceway-contexts/3-decide.html'
+                        }
                     },{
-                        label: "Act"
+                        label: "Act",
+                        contextWidth: 1.5,
+                        content: {
+                            htmlFile: './raceway-contexts/4-act.html'
+                        }
                     },{
-                        label: "Loop"
+                        label: "Loop",
+                        content: {
+                            htmlFile: './raceway-contexts/5-loop.html'
+                        }
                     }
-
-
                 ]
             };
 
@@ -228,6 +243,11 @@
                     </feMerge>
                 </filter>
 
+                <filter id="simple-blur">
+                    <feMorphology operator="dilate" radius="5" in="SourceGraphic" />
+                    <feGaussianBlur stdDeviation="10" />
+                    <feComposite operator="in" in2="SourceGraphic" />
+                </filter>
             </defs>
 
         </svg>

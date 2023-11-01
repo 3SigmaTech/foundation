@@ -56,7 +56,7 @@ export function roundedRectPath(opts:RectPathOptions) {
     pathStr += getBottomRightRoundedNinety(opts.radii[2]);
     pathStr += `h-${opts.width - opts.radii[2] - opts.radii[3]} `;
     pathStr += getBottomLeftRoundedNinety(opts.radii[3]);
-    pathStr += `v-${opts.height - opts.radii[3] - opts.radii[0]} `;
+    pathStr += `v-${opts.height - opts.radii[3] - opts.radii[0]} Z`;
     return pathStr;
 }
 
@@ -67,11 +67,22 @@ export function getTopLeftRoundedNinety(radius:number, clockwise = true) {
         return `q-${radius},0 -${radius},${radius}`;
     }
 }
-export function getTopRightRoundedNinety(radius: number, clockwise = true) {
-    if (clockwise) {
-        return `q${radius},0 ${radius},${radius}`;
+
+export function getTopRightRoundedNinety(radius: number, clockwise = true, shallow = false) {
+    if (!shallow) {
+        if (clockwise) {
+            return `q${radius},0 ${radius},${radius}`;
+        } else {
+            return `q0,-${radius} -${radius},-${radius}`;
+        }
     } else {
-        return `q0,-${radius} -${radius},-${radius}`;
+        // TODO: DEVELOP CUBIC BEZIER CURVES AS WELL
+        const m = 1;
+        if (clockwise) {
+            return `c ${m * radius},0 ${radius},${(1 - m) * radius} ${radius},${radius}`;
+        } else {
+            return `q0,-${radius} -${radius},-${radius}`;
+        }
     }
 }
 export function getBottomLeftRoundedNinety(radius: number, clockwise = true) {
