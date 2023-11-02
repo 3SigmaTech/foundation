@@ -15,11 +15,12 @@ let base = {
     input: './index.ts',
     //input: './build/foundation.js',
     output: {
-        format: 'umd',
+        format: 'esm',
         name: 'index',
     },
     plugins: [
-        resolve({ extensions: ['.js', '.jsx', '.ts', '.tsx'], jsnext: true }),
+        resolve({ jsnext: true, main: true }),
+        //resolve({ extensions: ['.js', '.jsx', '.ts', '.tsx'], jsnext: true }),
         // commonjs({
         //     include: /node_modules/
         // }),
@@ -38,7 +39,10 @@ let base = {
 
 let build = Object.assign({ ...base }, {
     output: {
-        file: './build/foundation.js', format:'umd', name:'foundation',
+        //dir: './build',
+        file: './build/foundation.js',
+        format: 'esm',
+        name: 'foundation'
     },
     plugins: [...base.plugins, typescript({
         tsconfig: `./tsconfig.json`,

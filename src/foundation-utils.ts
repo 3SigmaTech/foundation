@@ -60,6 +60,7 @@ export type FoundationOptions = {
     racewaySpinnerWidth: number;
     racewayChevronDepth: number;
     racewayRadius: number;
+    racewayLabel: string;
     racewayColors: string[];
     racewayLevels: number; // set automatically
     //tooltip: boolean;

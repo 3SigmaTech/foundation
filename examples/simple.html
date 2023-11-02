@@ -107,10 +107,10 @@
             border: 1px solid black;
         }
     </style>
-    <script src="./foundation.js"></script>
 
-    <script type="application/javascript">
-        function init() {
+    <script type="module">
+        import * as foundation from './foundation.js';
+        (() => {
             let sample = {
                 pyramid:[
                     {
@@ -194,6 +194,8 @@
 
             let opts = {
                 container: '#main',
+                width: 2245, // 594mm --> A2 Paper Size
+                height: 1587, // 420mm
                 title: {
                     text: 'Hierarchy of Leadership',
                     labelStyle: 'fill:#ffffff;stroke:#000000;stroke-width:0.25px;font-size:5em;font-family:Iceland;',
@@ -210,14 +212,15 @@
                     content: {
                         htmlFile: './contexts/banner-right.html'
                     }
-                }
+                },
+                racewayLabel: 'OODA Loop'
             }
             let billboard = foundation.render(sample, opts);
-        }
+        })();
     </script>
 </head>
 
-<body onload="init()">
+<body>
 
     <div class="container">
         <svg id="main">

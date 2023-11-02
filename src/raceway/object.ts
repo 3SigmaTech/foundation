@@ -27,6 +27,11 @@ export type RacewayObject = {
     sections: RacewaySection[];
     track: number[][];
     gradient: GradientStop[];
+    labels: {
+        cx: number,
+        cy: number,
+        text: string
+    }[]
 };
 
 export function generateRaceway(data:RacewayData, opts:FoundationOptions, x0: number, y0: number): RacewayObject {
@@ -231,7 +236,18 @@ export function generateRaceway(data:RacewayData, opts:FoundationOptions, x0: nu
         cumulativeDist += 0.5 * sectionWidth * (data[i].contextWidth ?? 1);
     }
 
-    return {sections: sections, track: track, gradient: gradient};
+
+    let racewayLabels = [{
+        cx: track[6][0] + (track[12][0] - track[6][0]) / 2,
+        cy: track[7][1] + (track[6][1] - track[7][1]) / 2,
+        text: opts.racewayLabel
+    }, {
+        cx: track[13][0] + (track[3][0] - track[13][0]) / 2,
+        cy: track[2][1] + (track[3][1] - track[2][1]) / 2,
+        text: opts.racewayLabel
+    }];
+
+    return {sections: sections, track: track, gradient: gradient, labels: racewayLabels};
 
 }
 
@@ -252,53 +268,6 @@ export function renderRaceway(raceway:RacewayObject, opts:FoundationOptions) {
         linearGradient.appendChild(stop);
     }
     defs.appendChild(linearGradient);
-
-    linearGradient = document.createElementNS("http://www.w3.org/2000/svg", 'linearGradient');
-    linearGradient.setAttribute('id', `raceway-gradient-light`);
-    for (let i = 0; i < raceway.gradient.length; i++) {
-        let stop = document.createElementNS("http://www.w3.org/2000/svg", 'stop');
-        stop.setAttribute('stop-color', `${mix_hexes("#ffffff", mix_hexes("#ffffff", raceway.gradient[i].color))}`);
-        stop.setAttribute('offset', `${raceway.gradient[i].offset}%`);
-        linearGradient.appendChild(stop);
-    }
-    defs.appendChild(linearGradient);
-
-
-    linearGradient = document.createElementNS("http://www.w3.org/2000/svg", 'linearGradient');
-    linearGradient.setAttribute('id', `raceway-gradient-dark`);
-    for (let i = 0; i < raceway.gradient.length; i++) {
-        let stop = document.createElementNS("http://www.w3.org/2000/svg", 'stop');
-        stop.setAttribute('stop-color', `${mix_hexes("#000000", raceway.gradient[i].color)}`);
-        stop.setAttribute('offset', `${raceway.gradient[i].offset}%`);
-        linearGradient.appendChild(stop);
-    }
-    defs.appendChild(linearGradient);
-
-
-    let innerGlow = document.createElementNS("http://www.w3.org/2000/svg", 'filter');
-    innerGlow.setAttribute('id', `inner-glow-raceway`);
-
-    let filter = document.createElementNS("http://www.w3.org/2000/svg", 'feFlood');
-    filter.setAttribute('flood-color', 'url(#raceway-gradient-light)');
-    innerGlow.appendChild(filter);
-
-    filter = document.createElementNS("http://www.w3.org/2000/svg", 'feComposite');
-    filter.setAttribute('operator', 'out');
-    filter.setAttribute('in2', 'SourceGraphic');
-    innerGlow.appendChild(filter);
-
-    filter = document.createElementNS("http://www.w3.org/2000/svg", 'feGaussianBlur');
-    filter.setAttribute('stdDeviation', '10');
-    filter.setAttribute('in2', 'SourceGraphic');
-    innerGlow.appendChild(filter);
-
-    filter = document.createElementNS("http://www.w3.org/2000/svg", 'feComposite');
-    filter.setAttribute('operator', 'atop');
-    filter.setAttribute('in2', 'SourceGraphic');
-    innerGlow.appendChild(filter);
-
-    defs.appendChild(innerGlow);
-
 
 
 
@@ -377,6 +346,8 @@ export function renderRaceway(raceway:RacewayObject, opts:FoundationOptions) {
         }
     }
 
+
+
     let racetrackRadius = opts.racewayRadius;
 
     let pathStr = `M ${raceway.track[0][0]} ${raceway.track[0][1]} `;
@@ -409,8 +380,6 @@ export function renderRaceway(raceway:RacewayObject, opts:FoundationOptions) {
     path.setAttribute('id', 'raceway-track');
     if (!opts.useFlatColors) {
         path.setAttribute('filter', 'url(#simple-blur)');
-        //path.setAttribute('filter', `url(#inner-glow)`);
-        //path.setAttribute('filter', `url(#inner-glow-raceway)`);
     }
     svg.appendChild(path);
 
@@ -424,4 +393,22 @@ export function renderRaceway(raceway:RacewayObject, opts:FoundationOptions) {
     path.setAttribute('style', styleStr);
     path.setAttribute('id', 'raceway-track-stroke');
     svg.appendChild(path);
+
+
+
+
+    let rotations = [-90, 90];
+    for (let i = 0; i < raceway.labels.length; i++) {
+        let tBox = svgutils.drawContainedText({
+            svg: svg,
+            text: raceway.labels[i].text,
+            x: raceway.labels[i].cx,
+            y: raceway.labels[i].cy,
+            textStyle: opts.labelStyle,
+            padding: utils.getPadding(opts)
+        });
+        tBox.label.setAttribute("transform", `rotate(${rotations[i]} ${raceway.labels[i].cx} ${raceway.labels[i].cy})`);
+        tBox.background.setAttribute("transform", `rotate(${rotations[i]} ${raceway.labels[i].cx} ${raceway.labels[i].cy})`);
+        tBox.background.setAttribute("fill", `none`);
+    }
 }

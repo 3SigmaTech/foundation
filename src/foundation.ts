@@ -19,8 +19,8 @@ function _defaultOpts():FoundationOptions {
         leftContext: null,
         rightContext: null,
         showBanner: true,
-        width: 2245, // 594mm --> A2 Paper Size
-        height: 1587, // 420mm
+        width: 2000,
+        height: 1500,
         padding: 5,
 
         pyramidWidth: 450,
@@ -65,6 +65,7 @@ function _defaultOpts():FoundationOptions {
         racewaySpinnerWidth: 0,
         racewayChevronDepth: 25,
         racewayRadius: 15,
+        racewayLabel: '',
         racewayColors: [
             //darkslategray
             '#2f4f4f',
