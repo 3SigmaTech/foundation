@@ -14,20 +14,27 @@ function getSVG(opts) {
   }
   return svg;
 }
-function getPadding(opts) {
-  return opts.padding;
-}
-function getBannerHeight(opts) {
-  return opts.bannerHeight;
+var _DEFS = null;
+function getDefs(opts) {
+  let defs;
+  let svg = getSVG(opts);
+  if (_DEFS == null) {
+    defs = svg.getElementsByTagNameNS("http://www.w3.org/2000/svg", 'defs')[0];
+    if (defs == null || defs == undefined) {
+      defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+      svg.appendChild(defs);
+    }
+    _DEFS = defs;
+  } else {
+    defs = _DEFS;
+  }
+  return defs;
 }
 function getPyramidHeight(opts) {
   if (opts.pyramidHeight >= opts.height) {
-    return opts.height - 2 * getPadding(opts);
+    return opts.height - 2 * opts.padding;
   }
   return opts.pyramidHeight;
-}
-function getPyramidWidth(opts) {
-  return opts.pyramidWidth;
 }
 function getPathGutter(opts) {
   return getPyramidHeight(opts) / opts.pyramidLevels;
@@ -37,33 +44,6 @@ function getPathWidth(opts) {
 }
 function getPathChannel(opts) {
   return getPathGutter(opts) / (opts.pyramidLevels + 1);
-}
-
-function mix_hexes_naive() {
-  for (var _len = arguments.length, hexes = new Array(_len), _key = 0; _key < _len; _key++) {
-    hexes[_key] = arguments[_key];
-  }
-  const rgbs = hexes.map(hex => hex2dec(hex));
-  const rgb = rgbs.reduce((acc, cur) => {
-    cur.forEach((e, i) => acc[i] = acc[i] ? acc[i] + e : e);
-    return acc;
-  }, []).map(e => e / rgbs.length);
-  const mixture = rgb2hex(rgb[0], rgb[1], rgb[2]);
-  return mixture;
-}
-function hex2dec(hex) {
-  let breakdown = hex.replace('#', '').match(/.{2}/g);
-  breakdown = breakdown == null ? ['0', '0', '0'] : breakdown;
-  return breakdown.map(n => parseInt(n, 16));
-}
-function rgb2hex(r, g, b) {
-  r = Math.round(r);
-  g = Math.round(g);
-  b = Math.round(b);
-  r = Math.min(r, 255);
-  g = Math.min(g, 255);
-  b = Math.min(b, 255);
-  return '#' + [r, g, b].map(c => c.toString(16).padStart(2, '0')).join('');
 }
 
 function embedContent(opts) {
@@ -125,20 +105,10 @@ function getTopLeftRoundedNinety(radius) {
 }
 function getTopRightRoundedNinety(radius) {
   let clockwise = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
-  let shallow = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
-  if (!shallow) {
-    if (clockwise) {
-      return `q${radius},0 ${radius},${radius}`;
-    } else {
-      return `q0,-${radius} -${radius},-${radius}`;
-    }
+  if (clockwise) {
+    return `q${radius},0 ${radius},${radius}`;
   } else {
-    const m = 1;
-    if (clockwise) {
-      return `c ${m * radius},0 ${radius},${(1 - m) * radius} ${radius},${radius}`;
-    } else {
-      return `q0,-${radius} -${radius},-${radius}`;
-    }
+    return `q0,-${radius} -${radius},-${radius}`;
   }
 }
 function getBottomLeftRoundedNinety(radius) {
@@ -158,13 +128,18 @@ function getBottomRightRoundedNinety(radius) {
   }
 }
 function drawContainedText(opts) {
+  let g = document.createElementNS("http://www.w3.org/2000/svg", 'g');
   let text = document.createElementNS("http://www.w3.org/2000/svg", 'text');
   text.setAttribute('x', opts.x.toString());
   text.setAttribute('y', opts.y.toString());
   text.setAttribute('style', opts.textStyle);
+  if (opts.centered !== undefined && !opts.centered) {
+    text.setAttribute('class', 'uncentered');
+  }
   var textNode = document.createTextNode(opts.text);
   text.appendChild(textNode);
-  opts.svg.appendChild(text);
+  g.appendChild(text);
+  opts.svg.appendChild(g);
   let textRect = text.getBBox();
   let padding = opts.padding;
   let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
@@ -174,18 +149,103 @@ function drawContainedText(opts) {
   rect.setAttribute("ry", padding.toString());
   rect.setAttribute("width", (textRect.width + 2 * padding).toString());
   rect.setAttribute("height", (textRect.height + 2 * padding).toString());
-  opts.svg.insertBefore(rect, text);
+  g.insertBefore(rect, text);
   return {
     label: text,
-    background: rect
+    background: rect,
+    group: g
   };
+}
+function drawRect(opts) {
+  let poly = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
+  poly.setAttribute('x', opts.x.toString());
+  poly.setAttribute('y', opts.y.toString());
+  poly.setAttribute('width', opts.width.toString());
+  poly.setAttribute('height', opts.height.toString());
+  if (opts.style) {
+    poly.setAttribute('style', opts.style);
+  }
+  opts.svg.appendChild(poly);
+  return poly;
+}
+function drawFilledPath(opts) {
+  let path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
+  path.setAttribute('d', opts.path);
+  path.setAttribute('style', opts.style + 'stroke-width:0;');
+  if (!opts.useFlatColors) {
+    path.setAttribute('filter', 'url(#glow-by-blur)');
+  }
+  opts.svg.appendChild(path);
+  path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
+  path.setAttribute('d', opts.path);
+  path.setAttribute('style', opts.style + 'fill:none;');
+  opts.svg.appendChild(path);
+}
+
+function hex2dec(hex) {
+  let breakdown = hex.replace('#', '').match(/.{2}/g);
+  breakdown = breakdown == null ? ['0', '0', '0'] : breakdown;
+  return breakdown.map(n => parseInt(n, 16));
+}
+function rgb2hex(r, g, b) {
+  r = Math.round(r);
+  g = Math.round(g);
+  b = Math.round(b);
+  r = Math.min(r, 255);
+  g = Math.min(g, 255);
+  b = Math.min(b, 255);
+  return '#' + [r, g, b].map(c => c.toString(16).padStart(2, '0')).join('');
+}
+function rgb2cmyk(r, g, b) {
+  let c = 1 - r / 255;
+  let m = 1 - g / 255;
+  let y = 1 - b / 255;
+  let k = Math.min(c, m, y);
+  if (k != 1) {
+    c = (c - k) / (1 - k);
+    m = (m - k) / (1 - k);
+    y = (y - k) / (1 - k);
+  } else {
+    c = m = y = 0;
+  }
+  return [c, m, y, k];
+}
+function cmyk2rgb(c, m, y, k) {
+  let r = c * (1 - k) + k;
+  let g = m * (1 - k) + k;
+  let b = y * (1 - k) + k;
+  r = (1 - r) * 255 + .5;
+  g = (1 - g) * 255 + .5;
+  b = (1 - b) * 255 + .5;
+  return [r, g, b];
+}
+function mix_cmyks() {
+  for (var _len2 = arguments.length, cmyks = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+    cmyks[_key2] = arguments[_key2];
+  }
+  let c = cmyks.map(cmyk => cmyk[0]).reduce((a, b) => a + b, 0) / cmyks.length;
+  let m = cmyks.map(cmyk => cmyk[1]).reduce((a, b) => a + b, 0) / cmyks.length;
+  let y = cmyks.map(cmyk => cmyk[2]).reduce((a, b) => a + b, 0) / cmyks.length;
+  let k = cmyks.map(cmyk => cmyk[3]).reduce((a, b) => a + b, 0) / cmyks.length;
+  return [c, m, y, k];
+}
+function mix_hexes() {
+  for (var _len3 = arguments.length, hexes = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+    hexes[_key3] = arguments[_key3];
+  }
+  let rgbs = hexes.map(hex => hex2dec(hex));
+  let cmyks = rgbs.map(rgb => rgb2cmyk(rgb[0], rgb[1], rgb[2]));
+  let mix_cmyk = mix_cmyks(...cmyks);
+  let mix_rgb = cmyk2rgb(mix_cmyk[0], mix_cmyk[1], mix_cmyk[2], mix_cmyk[3]);
+  let mix_hex = rgb2hex(mix_rgb[0], mix_rgb[1], mix_rgb[2]);
+  return mix_hex;
 }
 
 function generatePyramid(data, opts) {
-  let padding = getPadding(opts);
+  let padding = opts.padding;
   let pH = getPyramidHeight(opts);
-  let pW = getPyramidWidth(opts);
-  let bannerHeight = getBannerHeight(opts);
+  let pW = opts.pyramidWidth;
+  let bannerHeight = opts.bannerHeight;
   let p0 = [0.5 * pW + padding, bannerHeight + padding];
   let p1 = [padding, bannerHeight + pH + padding];
   let p2 = [pW + padding, bannerHeight + pH + padding];
@@ -206,29 +266,41 @@ function generatePyramid(data, opts) {
     lastR = nextR;
   }
   return {
+    pyramid: [p0, p1, p2],
     levels: levels,
     labels: labels
   };
 }
 function renderPyramid(pyramid, opts) {
   let svg = getSVG(opts);
+  let pointStr = 'M';
+  for (let pt of pyramid.pyramid) {
+    pointStr += `${pt[0]},${pt[1]} `;
+  }
+  pointStr += 'Z';
+  let styleStr = `stroke-width:1;fill:#ffffff;stroke:#ffffff;`;
+  let poly = document.createElementNS("http://www.w3.org/2000/svg", 'path');
+  poly.setAttribute('d', pointStr.trim());
+  poly.setAttribute('style', styleStr);
+  svg.appendChild(poly);
   for (let i = 0; i < pyramid.levels.length; i++) {
-    let pointStr = '';
+    let pointStr = 'M';
     for (let pt of pyramid.levels[i]) {
-      pointStr += ` ${pt[0]},${pt[1]}`;
+      pointStr += `${pt[0]},${pt[1]} `;
     }
+    pointStr += 'Z';
     let styleStr = 'stroke-width:1;';
     styleStr += `fill:${opts.pyramidColors[i]};`;
-    styleStr += `stroke:${mix_hexes_naive(opts.pyramidColors[i], "#000000")};`;
-    let poly = document.createElementNS("http://www.w3.org/2000/svg", 'polygon');
-    poly.setAttribute('points', pointStr.trim());
+    styleStr += `stroke:${mix_hexes(opts.pyramidColors[i], "#000000")};`;
+    let poly = document.createElementNS("http://www.w3.org/2000/svg", 'path');
+    poly.setAttribute('d', pointStr.trim());
     poly.setAttribute('style', styleStr);
     if (!opts.useFlatColors) {
-      poly.setAttribute('filter', `url(#inner-glow-pyramid-${i})`);
+      poly.setAttribute('filter', 'url(#glow-by-blur)');
     }
     svg.appendChild(poly);
-    poly = document.createElementNS("http://www.w3.org/2000/svg", 'polygon');
-    poly.setAttribute('points', pointStr.trim());
+    poly = document.createElementNS("http://www.w3.org/2000/svg", 'path');
+    poly.setAttribute('d', pointStr.trim());
     poly.setAttribute('style', styleStr + 'fill:none;');
     svg.appendChild(poly);
   }
@@ -239,13 +311,42 @@ function renderPyramid(pyramid, opts) {
       x: pyramid.labels[i].x,
       y: pyramid.labels[i].y,
       textStyle: opts.labelStyle,
-      padding: getPadding(opts)
+      padding: opts.padding
     });
-    tBox.background.setAttribute("fill", `${mix_hexes_naive(opts.pyramidColors[i], mix_hexes_naive(opts.pyramidColors[i], "#000000"))}`);
+    tBox.background.setAttribute("fill", `${mix_hexes(opts.pyramidColors[i], mix_hexes(opts.pyramidColors[i], "#000000"))}`);
     if (!opts.useFlatColors) {
       tBox.background.setAttribute('filter', `url(#big-blur)`);
     }
   }
+  styleStr = opts.labelStyle;
+  styleStr += `letter-spacing:0.05em;`;
+  let text = document.createElementNS("http://www.w3.org/2000/svg", 'text');
+  text.setAttribute('style', styleStr);
+  text.setAttribute('class', 'uncentered');
+  var textNode = document.createTextNode(opts.pyramidLabel);
+  text.appendChild(textNode);
+  svg.appendChild(text);
+  let textRect = text.getBBox();
+  svg.removeChild(text);
+  let angle = Math.atan((pyramid.pyramid[1][1] - pyramid.pyramid[0][1]) / (pyramid.pyramid[0][0] - pyramid.pyramid[1][0]));
+  let rotation = angle * -(180 / Math.PI);
+  let [cx, cy] = pyramid.pyramid[1];
+  let dy = getPathGutter(opts) / 2;
+  cy -= dy;
+  cx += dy / Math.tan(angle) + textRect.height / 2 + opts.padding;
+  let tBox = drawContainedText({
+    svg: svg,
+    text: opts.pyramidLabel,
+    x: cx,
+    y: cy,
+    textStyle: styleStr,
+    padding: opts.padding,
+    centered: false
+  });
+  tBox.group.setAttribute('filter', 'url(#emboss)');
+  tBox.label.setAttribute("transform", `rotate(${rotation} ${cx} ${cy})`);
+  tBox.background.setAttribute("transform", `rotate(${rotation} ${cx} ${cy})`);
+  tBox.background.setAttribute("fill", `none`);
 }
 
 function generateContext(data, opts) {
@@ -263,12 +364,12 @@ function generateContext(data, opts) {
     rowMeta.width[row] += colWidth;
     rowMeta.columns[row]++;
   }
-  let padding = getPadding(opts);
-  let pyramidWidth = getPyramidWidth(opts);
+  let padding = opts.padding;
+  let pyramidWidth = opts.pyramidWidth;
   let pyramidHeight = getPyramidHeight(opts);
   let pathGutter = getPathGutter(opts);
   let pathChannelWidth = getPathChannel(opts);
-  let bannerHeight = getBannerHeight(opts);
+  let bannerHeight = opts.bannerHeight;
   let titles = [];
   let bodies = [];
   let titleHeight = Math.min(pathGutter, opts.maxTitleHeight);
@@ -338,38 +439,30 @@ function generateContext(data, opts) {
 }
 function renderContext(context, opts) {
   let svg = getSVG(opts);
-  let padding = getPadding(opts);
+  let padding = opts.padding;
   for (let i = 0; i < context.titles.length; i++) {
     let pathStr = roundedRectPath({
-      x: context.titles[i].x,
-      y: context.titles[i].y,
-      width: context.titles[i].width,
-      height: context.titles[i].height,
+      ...context.titles[i],
       radii: [padding, padding, 0, 0]
     });
     let styleStr = 'stroke-width:1;';
     styleStr += `fill:${opts.pyramidColors[i]};`;
-    styleStr += `stroke:${mix_hexes_naive(opts.pyramidColors[i], "#000000")};`;
-    let path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
-    path.setAttribute('d', pathStr);
-    path.setAttribute('style', styleStr);
-    if (!opts.useFlatColors) {
-      path.setAttribute('filter', `url(#inner-glow-pyramid-${i})`);
-    }
-    svg.appendChild(path);
-    path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
-    path.setAttribute('d', pathStr);
-    path.setAttribute('style', styleStr += 'fill:none;');
-    svg.appendChild(path);
+    styleStr += `stroke:${mix_hexes(opts.pyramidColors[i], "#000000")};`;
+    drawFilledPath({
+      path: pathStr,
+      style: styleStr,
+      useFlatColors: opts.useFlatColors,
+      svg: svg
+    });
     let tBox = drawContainedText({
       svg: svg,
       text: context.titles[i].text,
       x: context.titles[i].cx,
       y: context.titles[i].cy,
       textStyle: opts.labelStyle,
-      padding: getPadding(opts)
+      padding: opts.padding
     });
-    tBox.background.setAttribute("fill", `${mix_hexes_naive(opts.pyramidColors[i], mix_hexes_naive(opts.pyramidColors[i], "#000000"))}`);
+    tBox.background.setAttribute("fill", `${mix_hexes(opts.pyramidColors[i], mix_hexes(opts.pyramidColors[i], "#000000"))}`);
     if (!opts.useFlatColors) {
       tBox.background.setAttribute('filter', `url(#big-blur)`);
     }
@@ -377,14 +470,12 @@ function renderContext(context, opts) {
   for (let i = 0; i < context.bodies.length; i++) {
     let styleStr = 'stroke-width:1;';
     styleStr += `fill:none;`;
-    styleStr += `stroke:${mix_hexes_naive(opts.pyramidColors[i], "#000000")};`;
-    let poly = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
-    poly.setAttribute('x', context.bodies[i].x.toString());
-    poly.setAttribute('y', context.bodies[i].y.toString());
-    poly.setAttribute('width', context.bodies[i].width.toString());
-    poly.setAttribute('height', context.bodies[i].height.toString());
-    poly.setAttribute('style', styleStr);
-    svg.appendChild(poly);
+    styleStr += `stroke:${mix_hexes(opts.pyramidColors[i], "#000000")};`;
+    drawRect({
+      ...context.bodies[i],
+      style: styleStr,
+      svg: svg
+    });
     embedContent({
       x: context.bodies[i].x + 0.5 * padding,
       y: context.bodies[i].y + 0.5 * padding,
@@ -400,10 +491,10 @@ function renderContext(context, opts) {
 }
 
 function generatePaths(pyramid, context, opts) {
-  let padding = getPadding(opts);
+  let padding = opts.padding;
   let pathGutter = getPathGutter(opts);
   let channel = getPathChannel(opts);
-  let bannerHeight = getBannerHeight(opts);
+  let bannerHeight = opts.bannerHeight;
   let paths = [];
   for (let i = 0; i < opts.pyramidLevels; i++) {
     let row = context.titles[i].row - 1;
@@ -444,23 +535,25 @@ function renderPaths(paths, opts) {
 }
 
 function renderFilters(opts, defelement) {
+  let innerGlow = _createInnerGlow(null, '#ffffff', null);
+  defelement.appendChild(innerGlow);
+  let faintOuterGlow = _createFaintOuterGlow(null, '#ffffff', null);
+  defelement.appendChild(faintOuterGlow);
   for (let i = 0; i < opts.pyramidColors.length; i++) {
-    let innerGlow = _createInnerGlow(i, mix_hexes_naive('#ffffff', opts.pyramidColors[i]), 'pyramid');
-    defelement.appendChild(innerGlow);
-    let faintOuterGlow = _createFaintOuterGlow(i, mix_hexes_naive('#ffffff', opts.pyramidColors[i]), 'pyramid');
+    let faintOuterGlow = _createFaintOuterGlow(i, mix_hexes('#ffffff', opts.pyramidColors[i]), 'pyramid');
     defelement.appendChild(faintOuterGlow);
   }
   for (let i = 0; i < opts.racewayColors.length; i++) {
-    let innerGlow = _createInnerGlow(i, mix_hexes_naive('#ffffff', opts.racewayColors[i]), 'raceway');
-    defelement.appendChild(innerGlow);
-    let faintOuterGlow = _createFaintOuterGlow(i, mix_hexes_naive('#ffffff', opts.racewayColors[i]), 'raceway');
+    let faintOuterGlow = _createFaintOuterGlow(i, mix_hexes('#ffffff', opts.racewayColors[i]), 'raceway');
     defelement.appendChild(faintOuterGlow);
   }
   _appendOneOffs(opts, defelement);
 }
 function _createInnerGlow(index, color, collection) {
   let innerGlow = document.createElementNS("http://www.w3.org/2000/svg", 'filter');
-  innerGlow.setAttribute('id', `inner-glow-${collection}-${index}`);
+  let id = `inner-glow` + (collection ? `-${collection}` : '') + (index || index == 0 ? `-${index}` : '');
+  innerGlow.setAttribute('id', id);
+  innerGlow.setAttribute('color-interpolation-filters', 'sRGB');
   let filter = document.createElementNS("http://www.w3.org/2000/svg", 'feFlood');
   filter.setAttribute('flood-color', color);
   innerGlow.appendChild(filter);
@@ -480,7 +573,9 @@ function _createInnerGlow(index, color, collection) {
 }
 function _createFaintOuterGlow(index, color, collection) {
   let outerGlow = document.createElementNS("http://www.w3.org/2000/svg", 'filter');
-  outerGlow.setAttribute('id', `faint-outer-glow-${collection}-${index}`);
+  let id = `faint-outer-glow` + (collection ? `-${collection}` : '') + (index || index == 0 ? `-${index}` : '');
+  outerGlow.setAttribute('id', id);
+  outerGlow.setAttribute('color-interpolation-filters', 'sRGB');
   let feMorphology = document.createElementNS("http://www.w3.org/2000/svg", 'feMorphology');
   feMorphology.setAttribute('operator', "dilate");
   feMorphology.setAttribute('radius', "1");
@@ -515,26 +610,100 @@ function _createFaintOuterGlow(index, color, collection) {
 function _appendOneOffs(_opts, defelement) {
   let blur = document.createElementNS("http://www.w3.org/2000/svg", 'filter');
   blur.setAttribute('id', `big-blur`);
+  blur.setAttribute('color-interpolation-filters', 'sRGB');
   blur.setAttribute('x', `-75%`);
   blur.setAttribute('y', `-75%`);
   blur.setAttribute('width', `250%`);
   blur.setAttribute('height', `250%`);
-  let filter = document.createElementNS("http://www.w3.org/2000/svg", 'feGaussianBlur');
-  filter.setAttribute('in', 'SourceGraphic');
-  filter.setAttribute('stdDeviation', `8`);
-  blur.appendChild(filter);
+  let feGaussianBlur = document.createElementNS("http://www.w3.org/2000/svg", 'feGaussianBlur');
+  feGaussianBlur.setAttribute('in', 'SourceGraphic');
+  feGaussianBlur.setAttribute('stdDeviation', `8`);
+  blur.appendChild(feGaussianBlur);
   defelement.appendChild(blur);
   blur = document.createElementNS("http://www.w3.org/2000/svg", 'filter');
-  blur.setAttribute('id', `blur`);
-  blur.setAttribute('x', `-25%`);
-  blur.setAttribute('y', `-25%`);
-  blur.setAttribute('width', `150%`);
-  blur.setAttribute('height', `150%`);
-  filter = document.createElementNS("http://www.w3.org/2000/svg", 'feGaussianBlur');
-  filter.setAttribute('in', 'SourceGraphic');
-  filter.setAttribute('stdDeviation', `3`);
-  blur.appendChild(filter);
+  blur.setAttribute('id', `glow-by-blur`);
+  blur.setAttribute('color-interpolation-filters', 'sRGB');
+  let feMorphology = document.createElementNS("http://www.w3.org/2000/svg", 'feMorphology');
+  feMorphology.setAttribute('operator', "dilate");
+  feMorphology.setAttribute('radius', "5");
+  feMorphology.setAttribute('in', "SourceGraphic");
+  blur.appendChild(feMorphology);
+  feGaussianBlur = document.createElementNS("http://www.w3.org/2000/svg", 'feGaussianBlur');
+  feGaussianBlur.setAttribute('stdDeviation', '10');
+  blur.appendChild(feGaussianBlur);
+  let feComposite = document.createElementNS("http://www.w3.org/2000/svg", 'feComposite');
+  feComposite.setAttribute('operator', 'in');
+  feComposite.setAttribute('in2', 'SourceGraphic');
+  blur.appendChild(feComposite);
   defelement.appendChild(blur);
+  defelement.appendChild(_defineEmboss());
+}
+function _defineEmboss() {
+  let emboss = document.createElementNS("http://www.w3.org/2000/svg", 'filter');
+  emboss.setAttribute('id', 'emboss');
+  emboss.setAttribute('color-interpolation-filters', 'sRGB');
+  {
+    let feFlood = document.createElementNS("http://www.w3.org/2000/svg", 'feFlood');
+    feFlood.setAttribute('flood-color', '#000000');
+    feFlood.setAttribute('flood-opacity', '0.33');
+    feFlood.setAttribute('result', 'blackFlood');
+    let feComposite = document.createElementNS("http://www.w3.org/2000/svg", 'feComposite');
+    feComposite.setAttribute('in', 'blackFlood');
+    feComposite.setAttribute('in2', 'SourceGraphic');
+    feComposite.setAttribute('operator', 'in');
+    feComposite.setAttribute('result', 'black');
+    let feOffset = document.createElementNS("http://www.w3.org/2000/svg", 'feOffset');
+    feOffset.setAttribute('in', 'black');
+    feOffset.setAttribute('dx', '0');
+    feOffset.setAttribute('dy', '0.5');
+    feOffset.setAttribute('result', 'dark');
+    let feComposite2 = document.createElementNS("http://www.w3.org/2000/svg", 'feComposite');
+    feComposite2.setAttribute('in', 'dark');
+    feComposite2.setAttribute('in2', 'SourceGraphic');
+    feComposite2.setAttribute('operator', 'out');
+    feComposite2.setAttribute('result', 'darkshadow');
+    emboss.appendChild(feFlood);
+    emboss.appendChild(feComposite);
+    emboss.appendChild(feOffset);
+    emboss.appendChild(feComposite2);
+  }
+  {
+    let feFlood = document.createElementNS("http://www.w3.org/2000/svg", 'feFlood');
+    feFlood.setAttribute('flood-color', '#ffffff');
+    feFlood.setAttribute('flood-opacity', '0.33');
+    feFlood.setAttribute('result', 'whiteFlood');
+    let feComposite = document.createElementNS("http://www.w3.org/2000/svg", 'feComposite');
+    feComposite.setAttribute('in', 'whiteFlood');
+    feComposite.setAttribute('in2', 'SourceGraphic');
+    feComposite.setAttribute('operator', 'in');
+    feComposite.setAttribute('result', 'white');
+    let feOffset = document.createElementNS("http://www.w3.org/2000/svg", 'feOffset');
+    feOffset.setAttribute('in', 'white');
+    feOffset.setAttribute('dx', '0');
+    feOffset.setAttribute('dy', '-0.5');
+    feOffset.setAttribute('result', 'light');
+    let feComposite2 = document.createElementNS("http://www.w3.org/2000/svg", 'feComposite');
+    feComposite2.setAttribute('in', 'light');
+    feComposite2.setAttribute('in2', 'SourceGraphic');
+    feComposite2.setAttribute('operator', 'out');
+    feComposite2.setAttribute('result', 'lightshadow');
+    emboss.appendChild(feFlood);
+    emboss.appendChild(feComposite);
+    emboss.appendChild(feOffset);
+    emboss.appendChild(feComposite2);
+  }
+  let feMerge = document.createElementNS("http://www.w3.org/2000/svg", 'feMerge');
+  let feMergeNode = document.createElementNS("http://www.w3.org/2000/svg", 'feMergeNode');
+  feMergeNode.setAttribute('in', 'darkshadow');
+  let feMergeNode2 = document.createElementNS("http://www.w3.org/2000/svg", 'feMergeNode');
+  feMergeNode2.setAttribute('in', 'BackgroundImage');
+  let feMergeNode3 = document.createElementNS("http://www.w3.org/2000/svg", 'feMergeNode');
+  feMergeNode3.setAttribute('in', 'lightshadow');
+  feMerge.appendChild(feMergeNode);
+  feMerge.appendChild(feMergeNode2);
+  feMerge.appendChild(feMergeNode3);
+  emboss.appendChild(feMerge);
+  return emboss;
 }
 
 function renderBanner(opts) {
@@ -577,7 +746,7 @@ function _renderLeftBox(opts, svg) {
     return;
   }
   embedContent({
-    x: getPadding(opts),
+    x: opts.padding,
     y: 0,
     width: opts.leftContext.width ?? 0,
     height: opts.bannerHeight,
@@ -591,7 +760,7 @@ function _renderRightBox(opts, svg) {
     return;
   }
   embedContent({
-    x: opts.width - (opts.rightContext.width ?? 0) - getPadding(opts),
+    x: opts.width - (opts.rightContext.width ?? 0) - opts.padding,
     y: 0,
     width: opts.rightContext.width ?? 0,
     height: opts.bannerHeight,
@@ -602,7 +771,7 @@ function _renderRightBox(opts, svg) {
 }
 
 function generateRaceway(data, opts, x0, y0) {
-  let padding = getPadding(opts);
+  let padding = opts.padding;
   let lastChevronOffset = -1 * (opts.racewayTitleHeight / 2 - opts.racewayChevronDepth);
   let widthUnits = 0;
   for (let i = 0; i < opts.racewayLevels; i++) {
@@ -745,11 +914,15 @@ function generateRaceway(data, opts, x0, y0) {
   };
 }
 function renderRaceway(raceway, opts) {
-  let svg = getSVG(opts);
-  let padding = getPadding(opts);
-  let defs = svg.getElementsByTagNameNS("http://www.w3.org/2000/svg", 'defs')[0];
+  _renderRacewayGradient(raceway, opts);
+  _renderRacewaySections(raceway, opts);
+  _renderRacewayTrack(raceway, opts);
+}
+function _renderRacewayGradient(raceway, opts) {
+  let defs = getDefs(opts);
   let linearGradient = document.createElementNS("http://www.w3.org/2000/svg", 'linearGradient');
   linearGradient.setAttribute('id', `raceway-gradient`);
+  linearGradient.setAttribute('color-interpolation-filters', 'sRGB');
   for (let i = 0; i < raceway.gradient.length; i++) {
     let stop = document.createElementNS("http://www.w3.org/2000/svg", 'stop');
     stop.setAttribute('stop-color', `${raceway.gradient[i].color}`);
@@ -757,17 +930,29 @@ function renderRaceway(raceway, opts) {
     linearGradient.appendChild(stop);
   }
   defs.appendChild(linearGradient);
+  linearGradient = document.createElementNS("http://www.w3.org/2000/svg", 'linearGradient');
+  linearGradient.setAttribute('id', `raceway-gradient-dark`);
+  linearGradient.setAttribute('color-interpolation-filters', 'sRGB');
+  for (let i = 0; i < raceway.gradient.length; i++) {
+    let stop = document.createElementNS("http://www.w3.org/2000/svg", 'stop');
+    stop.setAttribute('stop-color', `${mix_hexes('#000000', raceway.gradient[i].color)}`);
+    stop.setAttribute('offset', `${raceway.gradient[i].offset}%`);
+    linearGradient.appendChild(stop);
+  }
+  defs.appendChild(linearGradient);
+}
+function _renderRacewaySections(raceway, opts) {
+  let svg = getSVG(opts);
+  let padding = opts.padding;
   for (let i = raceway.sections.length - 1; i >= 0; i--) {
     let styleStr = 'stroke-width:1;';
     styleStr += `fill:none;`;
-    styleStr += `stroke:${mix_hexes_naive(opts.racewayColors[i], "#000000")};`;
-    let poly = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
-    poly.setAttribute('x', raceway.sections[i].body.x.toString());
-    poly.setAttribute('y', raceway.sections[i].body.y.toString());
-    poly.setAttribute('width', raceway.sections[i].body.width.toString());
-    poly.setAttribute('height', raceway.sections[i].body.height.toString());
-    poly.setAttribute('style', styleStr);
-    svg.appendChild(poly);
+    styleStr += `stroke:${mix_hexes(opts.racewayColors[i], "#000000")};`;
+    drawRect({
+      ...raceway.sections[i].body,
+      style: styleStr,
+      svg: svg
+    });
     embedContent({
       x: raceway.sections[i].body.x + 0.5 * padding,
       y: raceway.sections[i].body.y + 0.5 * padding,
@@ -781,41 +966,35 @@ function renderRaceway(raceway, opts) {
     });
     styleStr = 'stroke-width:1;';
     styleStr += `fill:${opts.racewayColors[i]};`;
-    styleStr += `stroke:${mix_hexes_naive(opts.racewayColors[i], "#000000")};`;
+    styleStr += `stroke:${mix_hexes(opts.racewayColors[i], "#000000")};`;
     styleStr += `stroke-miterlimit:10;`;
     let pathStr = `M ${raceway.sections[i].points[0][0]} ${raceway.sections[i].points[0][1]} `;
     for (let j = 1; j < raceway.sections[i].points.length; j++) {
       pathStr += `L ${raceway.sections[i].points[j][0]} ${raceway.sections[i].points[j][1]} `;
     }
     pathStr += 'Z';
-    let path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
-    path.setAttribute('d', pathStr);
-    path.setAttribute('style', styleStr);
-    if (!opts.useFlatColors) {
-      path.setAttribute('filter', `url(#inner-glow-raceway-${i})`);
-    }
-    svg.appendChild(path);
-    styleStr = 'stroke-width:1;';
-    styleStr += `fill:none;`;
-    styleStr += `stroke:${mix_hexes_naive(opts.racewayColors[i], "#000000")};`;
-    styleStr += `stroke-miterlimit:10;`;
-    path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
-    path.setAttribute('d', pathStr);
-    path.setAttribute('style', styleStr);
-    svg.appendChild(path);
+    drawFilledPath({
+      path: pathStr,
+      style: styleStr,
+      useFlatColors: opts.useFlatColors,
+      svg: svg
+    });
     let tBox = drawContainedText({
       svg: svg,
       text: raceway.sections[i].text,
       x: raceway.sections[i].cx,
       y: raceway.sections[i].cy,
       textStyle: opts.labelStyle,
-      padding: getPadding(opts)
+      padding: opts.padding
     });
-    tBox.background.setAttribute("fill", `${mix_hexes_naive(opts.racewayColors[i], mix_hexes_naive(opts.racewayColors[i], "#000000"))}`);
+    tBox.background.setAttribute("fill", `${mix_hexes(opts.racewayColors[i], mix_hexes(opts.racewayColors[i], "#000000"))}`);
     if (!opts.useFlatColors) {
       tBox.background.setAttribute('filter', `url(#big-blur)`);
     }
   }
+}
+function _renderRacewayTrack(raceway, opts) {
+  let svg = getSVG(opts);
   let racetrackRadius = opts.racewayRadius;
   let pathStr = `M ${raceway.track[0][0]} ${raceway.track[0][1]} `;
   for (let j = 1; j < raceway.track.length; j++) {
@@ -835,37 +1014,29 @@ function renderRaceway(raceway, opts) {
     }
   }
   pathStr += 'Z';
-  let styleStr = 'stroke-width:0;';
+  let styleStr = 'stroke-width:1;';
   styleStr += `fill:url(#raceway-gradient);`;
-  styleStr += `stroke:${mix_hexes_naive('#999999', "#000000")};`;
-  styleStr += `stroke-miterlimit:10;`;
-  let path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
-  path.setAttribute('d', pathStr);
-  path.setAttribute('style', styleStr);
-  path.setAttribute('id', 'raceway-track');
-  if (!opts.useFlatColors) {
-    path.setAttribute('filter', 'url(#simple-blur)');
-  }
-  svg.appendChild(path);
-  styleStr = 'stroke-width:1;';
-  styleStr += `fill:none;`;
   styleStr += `stroke:url(#raceway-gradient-dark);`;
   styleStr += `stroke-miterlimit:10;`;
-  path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
-  path.setAttribute('d', pathStr);
-  path.setAttribute('style', styleStr);
-  path.setAttribute('id', 'raceway-track-stroke');
-  svg.appendChild(path);
+  drawFilledPath({
+    path: pathStr,
+    style: styleStr,
+    useFlatColors: opts.useFlatColors,
+    svg: svg
+  });
   let rotations = [-90, 90];
   for (let i = 0; i < raceway.labels.length; i++) {
+    styleStr = opts.labelStyle;
+    styleStr += `letter-spacing:0.05em;`;
     let tBox = drawContainedText({
       svg: svg,
       text: raceway.labels[i].text,
       x: raceway.labels[i].cx,
       y: raceway.labels[i].cy,
-      textStyle: opts.labelStyle,
-      padding: getPadding(opts)
+      textStyle: styleStr,
+      padding: opts.padding
     });
+    tBox.group.setAttribute('filter', 'url(#emboss)');
     tBox.label.setAttribute("transform", `rotate(${rotations[i]} ${raceway.labels[i].cx} ${raceway.labels[i].cy})`);
     tBox.background.setAttribute("transform", `rotate(${rotations[i]} ${raceway.labels[i].cx} ${raceway.labels[i].cy})`);
     tBox.background.setAttribute("fill", `none`);
@@ -889,6 +1060,7 @@ function _defaultOpts() {
     pyramidHeight: 500,
     bannerHeight: 90,
     maxTitleHeight: 50,
+    pyramidLabel: '',
     pyramidColors: ["#f032e6", "#42d4f4", "#00ff00", "#f58231", "#4363d8", "#e6194B", "#009933", "#6600ff", '#006400', '#ff0000', '#00ced1', '#ffa500', '#98fb98', '#ff00ff', '#6495ed', '#000080', '#ffdab9'],
     pyramidLevels: 0,
     racewayOffset: 20,
@@ -945,7 +1117,7 @@ function _render(input_data, input_opts) {
   if (pyramidContext) {
     renderContext(pyramidContext, opts);
   }
-  let padding = getPadding(opts);
+  let padding = opts.padding;
   let x0 = padding;
   let lastPContext = pyramidContext.bodies[pyramidContext.bodies.length - 1];
   let y0 = lastPContext.y + lastPContext.height + padding + opts.racewayOffset;
@@ -979,16 +1151,8 @@ function _validateOptions(opts) {
   return null;
 }
 function _renderDefs(opts) {
-  let svg = getSVG(opts);
-  let defs = svg.getElementsByTagNameNS("http://www.w3.org/2000/svg", 'defs');
-  let defTag;
-  if (defs.length > 0) {
-    defTag = defs[0];
-  } else {
-    defTag = document.createElementNS("http://www.w3.org/2000/svg", 'defs');
-    svg.appendChild(defTag);
-  }
-  renderFilters(opts, defTag);
+  let defs = getDefs(opts);
+  renderFilters(opts, defs);
 }
 
 export { render };

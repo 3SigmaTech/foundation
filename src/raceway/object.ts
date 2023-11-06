@@ -1,7 +1,8 @@
 import type { FoundationOptions, FoundationContent, RacewayData } from "../foundation-utils";
 import * as utils from '../foundation-utils';
 import * as svgutils from '../svg-utils';
-import { mix_hexes_naive as mix_hexes } from '../color-mixer';
+import { mix_hexes } from "../color-mixer";
+
 
 export type RacewaySection = {
     text: string;
@@ -10,13 +11,10 @@ export type RacewaySection = {
     points: number[][];
     body: {
         content: FoundationContent;
-        //cx: number;
-        //cy: number;
         x: number;
         y: number;
         width: number;
         height: number;
-        //row: number;
     }
 };
 export type GradientStop = {
@@ -36,7 +34,7 @@ export type RacewayObject = {
 
 export function generateRaceway(data:RacewayData, opts:FoundationOptions, x0: number, y0: number): RacewayObject {
 
-    let padding = utils.getPadding(opts);
+    let padding = opts.padding;
     let lastChevronOffset = -1 * (opts.racewayTitleHeight/2 - opts.racewayChevronDepth);
 
     let widthUnits = 0;
@@ -253,14 +251,19 @@ export function generateRaceway(data:RacewayData, opts:FoundationOptions, x0: nu
 
 
 export function renderRaceway(raceway:RacewayObject, opts:FoundationOptions) {
+    _renderRacewayGradient(raceway, opts);
+    _renderRacewaySections(raceway, opts);
+    _renderRacewayTrack(raceway, opts);
+}
 
-    let svg = utils.getSVG(opts);
-    let padding = utils.getPadding(opts);
 
-    let defs = svg.getElementsByTagNameNS("http://www.w3.org/2000/svg", 'defs')[0];
-
+function _renderRacewayGradient(raceway: RacewayObject, opts: FoundationOptions) {
+    let defs = utils.getDefs(opts);
+    
     let linearGradient = document.createElementNS("http://www.w3.org/2000/svg", 'linearGradient');
     linearGradient.setAttribute('id', `raceway-gradient`);
+    linearGradient.setAttribute('color-interpolation-filters', 'sRGB');
+
     for (let i = 0; i < raceway.gradient.length; i++) {
         let stop = document.createElementNS("http://www.w3.org/2000/svg", 'stop');
         stop.setAttribute('stop-color', `${raceway.gradient[i].color}`);
@@ -270,26 +273,35 @@ export function renderRaceway(raceway:RacewayObject, opts:FoundationOptions) {
     defs.appendChild(linearGradient);
 
 
+    linearGradient = document.createElementNS("http://www.w3.org/2000/svg", 'linearGradient');
+    linearGradient.setAttribute('id', `raceway-gradient-dark`);
+    linearGradient.setAttribute('color-interpolation-filters', 'sRGB');
 
+    for (let i = 0; i < raceway.gradient.length; i++) {
+        let stop = document.createElementNS("http://www.w3.org/2000/svg", 'stop');
+        stop.setAttribute('stop-color', `${mix_hexes('#000000', raceway.gradient[i].color)}`);
+        stop.setAttribute('offset', `${raceway.gradient[i].offset}%`);
+        linearGradient.appendChild(stop);
+    }
+    defs.appendChild(linearGradient);
+}
 
+function _renderRacewaySections(raceway: RacewayObject, opts: FoundationOptions) {
+    let svg = utils.getSVG(opts);
+    let padding = opts.padding;
 
-
-
-
-    // Render in reverse to clean up very small imperfect in drawing
+    // Render in reverse to clean up very small imperfection in drawing
     for (let i = raceway.sections.length - 1; i >= 0; i--) {
         let styleStr = 'stroke-width:1;';
         styleStr += `fill:none;`;
         styleStr += `stroke:${mix_hexes(opts.racewayColors[i], "#000000")};`;
 
-        let poly = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
-        poly.setAttribute('x', raceway.sections[i].body.x.toString());
-        poly.setAttribute('y', raceway.sections[i].body.y.toString());
-        poly.setAttribute('width', raceway.sections[i].body.width.toString());
-        poly.setAttribute('height', raceway.sections[i].body.height.toString());
-        poly.setAttribute('style', styleStr);
-        svg.appendChild(poly);
-
+        svgutils.drawRect({
+            ...raceway.sections[i].body,
+            style: styleStr,
+            svg: svg
+        });
+        
         svgutils.embedContent({
             x: raceway.sections[i].body.x + 0.5 * padding,
             y: raceway.sections[i].body.y + 0.5 * padding,
@@ -311,26 +323,12 @@ export function renderRaceway(raceway:RacewayObject, opts:FoundationOptions) {
         }
         pathStr += 'Z';
 
-        let path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
-        path.setAttribute('d', pathStr);
-        path.setAttribute('style', styleStr);
-        if (!opts.useFlatColors) {
-            path.setAttribute('filter', `url(#inner-glow-raceway-${i})`);
-            //path.setAttribute('filter', 'url(#simple-blur)');
-
-        }
-        svg.appendChild(path);
-
-        // Render again to get proper stroke colors
-        styleStr = 'stroke-width:1;';
-        styleStr += `fill:none;`;
-        styleStr += `stroke:${mix_hexes(opts.racewayColors[i], "#000000")};`;
-        styleStr += `stroke-miterlimit:10;`;
-        
-        path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
-        path.setAttribute('d', pathStr);
-        path.setAttribute('style', styleStr);
-        svg.appendChild(path);
+        svgutils.drawFilledPath({
+            path: pathStr,
+            style: styleStr,
+            useFlatColors: opts.useFlatColors,
+            svg: svg
+        });
 
         let tBox = svgutils.drawContainedText({
             svg: svg,
@@ -338,15 +336,17 @@ export function renderRaceway(raceway:RacewayObject, opts:FoundationOptions) {
             x: raceway.sections[i].cx,
             y: raceway.sections[i].cy,
             textStyle: opts.labelStyle,
-            padding: utils.getPadding(opts)
+            padding: opts.padding
         });
         tBox.background.setAttribute("fill", `${mix_hexes(opts.racewayColors[i], mix_hexes(opts.racewayColors[i], "#000000"))}`);
         if (!opts.useFlatColors) {
             tBox.background.setAttribute('filter', `url(#big-blur)`);
         }
     }
+}
 
-
+function _renderRacewayTrack(raceway: RacewayObject, opts: FoundationOptions) {
+    let svg = utils.getSVG(opts);
 
     let racetrackRadius = opts.racewayRadius;
 
@@ -369,46 +369,39 @@ export function renderRaceway(raceway:RacewayObject, opts:FoundationOptions) {
     }
     pathStr += 'Z';
 
-    let styleStr = 'stroke-width:0;';
+    let styleStr = 'stroke-width:1;';
     styleStr += `fill:url(#raceway-gradient);`;
-    styleStr += `stroke:${mix_hexes('#999999', "#000000")};`;
-    styleStr += `stroke-miterlimit:10;`;
-
-    let path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
-    path.setAttribute('d', pathStr);
-    path.setAttribute('style', styleStr);
-    path.setAttribute('id', 'raceway-track');
-    if (!opts.useFlatColors) {
-        path.setAttribute('filter', 'url(#simple-blur)');
-    }
-    svg.appendChild(path);
-
-    styleStr = 'stroke-width:1;';
-    styleStr += `fill:none;`;
     styleStr += `stroke:url(#raceway-gradient-dark);`;
     styleStr += `stroke-miterlimit:10;`;
 
-    path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
-    path.setAttribute('d', pathStr);
-    path.setAttribute('style', styleStr);
-    path.setAttribute('id', 'raceway-track-stroke');
-    svg.appendChild(path);
+    svgutils.drawFilledPath({
+        path: pathStr,
+        style: styleStr,
+        useFlatColors: opts.useFlatColors,
+        svg: svg
+    });
 
 
 
-
+    // Renders embossed labels on the racetrack
     let rotations = [-90, 90];
     for (let i = 0; i < raceway.labels.length; i++) {
+
+        styleStr = opts.labelStyle;
+        styleStr += `letter-spacing:0.05em;`
+
         let tBox = svgutils.drawContainedText({
             svg: svg,
             text: raceway.labels[i].text,
             x: raceway.labels[i].cx,
             y: raceway.labels[i].cy,
-            textStyle: opts.labelStyle,
-            padding: utils.getPadding(opts)
+            textStyle: styleStr,
+            padding: opts.padding
         });
+        tBox.group.setAttribute('filter', 'url(#emboss)');
         tBox.label.setAttribute("transform", `rotate(${rotations[i]} ${raceway.labels[i].cx} ${raceway.labels[i].cy})`);
         tBox.background.setAttribute("transform", `rotate(${rotations[i]} ${raceway.labels[i].cx} ${raceway.labels[i].cy})`);
         tBox.background.setAttribute("fill", `none`);
+
     }
 }

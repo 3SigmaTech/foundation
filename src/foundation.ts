@@ -13,6 +13,7 @@ export function render(data:FoundationData, opts: FoundationOptions) {
 };
 
 function _defaultOpts():FoundationOptions {
+
     return {
         container: '',
         title: null,
@@ -27,6 +28,7 @@ function _defaultOpts():FoundationOptions {
         pyramidHeight: 500,
         bannerHeight: 90,
         maxTitleHeight: 50,
+        pyramidLabel: '',
         pyramidColors: [
             "#f032e6",
             "#42d4f4",
@@ -137,7 +139,7 @@ function _render(input_data:FoundationData, input_opts:FoundationOptions) {
         renderContext(pyramidContext, opts);
     }
 
-    let padding = utils.getPadding(opts);
+    let padding = opts.padding;
     let x0 = padding;
     let lastPContext = pyramidContext.bodies[pyramidContext.bodies.length - 1];
     let y0 = lastPContext.y + lastPContext.height + padding + opts.racewayOffset;
@@ -175,17 +177,6 @@ function _validateOptions(opts:FoundationOptions):string|null {
 }
 
 function _renderDefs(opts:FoundationOptions):void {
-
-    let svg = utils.getSVG(opts);
-    let defs = svg.getElementsByTagNameNS("http://www.w3.org/2000/svg", 'defs');
-    let defTag;
-    if (defs.length > 0) {
-        defTag = defs[0];
-    } else {
-        defTag = document.createElementNS("http://www.w3.org/2000/svg", 'defs');
-        svg.appendChild(defTag);
-    }
-
-    renderFilters(opts, defTag);
-
+    let defs = utils.getDefs(opts);
+    renderFilters(opts, defs);
 }

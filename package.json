@@ -9,8 +9,7 @@
         "maslow"
     ],
     "license": "BSD-3-Clause",
-    "main": "build/foundation.js",
-    "jsnext:main": "index",
+    "main": "index.ts",
     "type": "module",
     "homepage": "https://github.com/3SigmaTech/foundation",
     "repository": {
@@ -47,9 +46,5 @@
         "tslib": "^2.5.0",
         "typescript": "^4.9.5",
         "uglify-js": "^3.17.4"
-    },
-    "dependencies": {
-        "gradient-path": "^2.3.0",
-        "tinygradient": "^1.1.5"
     }
 }

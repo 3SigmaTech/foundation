@@ -3,7 +3,7 @@ import type { FoundationOptions, PyramidData, FoundationContent } from '../found
 import * as utils from '../foundation-utils';
 import * as svgutils from '../svg-utils';
 
-import { mix_hexes_naive as mix_hexes } from '../color-mixer';
+import { mix_hexes } from "../color-mixer";
 
 export type PyramidContext = {
     titles:{
@@ -44,12 +44,12 @@ export function generateContext(data:PyramidData, opts:FoundationOptions):Pyrami
         rowMeta.columns[row]++;
     }
     
-    let padding = utils.getPadding(opts);
-    let pyramidWidth = utils.getPyramidWidth(opts);
+    let padding = opts.padding;
+    let pyramidWidth = opts.pyramidWidth;
     let pyramidHeight = utils.getPyramidHeight(opts);
     let pathGutter = utils.getPathGutter(opts);
     let pathChannelWidth = utils.getPathChannel(opts);
-    let bannerHeight = utils.getBannerHeight(opts);
+    let bannerHeight = opts.bannerHeight;
 
     let titles = [];
     let bodies = [];
@@ -136,15 +136,13 @@ export function generateContext(data:PyramidData, opts:FoundationOptions):Pyrami
 export function renderContext(context:PyramidContext, opts:FoundationOptions) {
 
     let svg = utils.getSVG(opts);
-    let padding = utils.getPadding(opts);
+    let padding = opts.padding;
 
     for (let i = 0; i < context.titles.length; i++) {
-
+        
+        // Create title banner
         let pathStr = svgutils.roundedRectPath({
-            x: context.titles[i].x,
-            y: context.titles[i].y,
-            width: context.titles[i].width,
-            height: context.titles[i].height,
+            ...context.titles[i],
             radii: [padding, padding, 0, 0]
         });
 
@@ -152,27 +150,22 @@ export function renderContext(context:PyramidContext, opts:FoundationOptions) {
         styleStr += `fill:${opts.pyramidColors[i]};`;
         styleStr += `stroke:${mix_hexes(opts.pyramidColors[i], "#000000")};`;
 
-        let path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
-        path.setAttribute('d', pathStr);
-        path.setAttribute('style', styleStr);
-        if (!opts.useFlatColors) {
-            path.setAttribute('filter', `url(#inner-glow-pyramid-${i})`);
-        }
-        svg.appendChild(path);
+        svgutils.drawFilledPath({
+            path: pathStr,
+            style: styleStr,
+            useFlatColors: opts.useFlatColors,
+            svg: svg
+        });
 
-        // Re-render path to get dark stroke (which is affected by filter on first path)
-        path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
-        path.setAttribute('d', pathStr);
-        path.setAttribute('style', styleStr += 'fill:none;');
-        svg.appendChild(path);
 
+        // Create title text
         let tBox = svgutils.drawContainedText({
             svg: svg,
             text: context.titles[i].text,
             x: context.titles[i].cx,
             y: context.titles[i].cy,
             textStyle: opts.labelStyle,
-            padding: utils.getPadding(opts)
+            padding: opts.padding
         });
         tBox.background.setAttribute("fill", `${mix_hexes(opts.pyramidColors[i], mix_hexes(opts.pyramidColors[i], "#000000"))}`);
         if (!opts.useFlatColors) {
@@ -187,13 +180,11 @@ export function renderContext(context:PyramidContext, opts:FoundationOptions) {
         styleStr += `fill:none;`;
         styleStr += `stroke:${mix_hexes(opts.pyramidColors[i], "#000000")};`;
 
-        let poly = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
-        poly.setAttribute('x', context.bodies[i].x.toString());
-        poly.setAttribute('y', context.bodies[i].y.toString());
-        poly.setAttribute('width', context.bodies[i].width.toString());
-        poly.setAttribute('height', context.bodies[i].height.toString());
-        poly.setAttribute('style', styleStr);
-        svg.appendChild(poly);
+        svgutils.drawRect({
+            ...context.bodies[i],
+            style: styleStr,
+            svg: svg
+        });
 
         svgutils.embedContent({
             x: context.bodies[i].x + 0.5 * padding,

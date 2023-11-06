@@ -1,7 +1,6 @@
 import type { FoundationOptions } from './foundation-utils';
 
 import * as utils from './foundation-utils';
-//import { mix_hexes_naive as mix_hexes } from './color-mixer';
 import * as svgutils from './svg-utils';
 
 export function renderBanner(opts: FoundationOptions) {
@@ -55,7 +54,7 @@ function _renderLeftBox(opts:FoundationOptions, svg:Element) {
     }
 
     svgutils.embedContent({
-        x: utils.getPadding(opts),
+        x: opts.padding,
         y: 0,
         width: opts.leftContext.width ?? 0,
         height: opts.bannerHeight,
@@ -72,7 +71,7 @@ function _renderRightBox(opts:FoundationOptions, svg:Element) {
     }
 
     svgutils.embedContent({
-        x: opts.width - (opts.rightContext.width ?? 0) - utils.getPadding(opts),
+        x: opts.width - (opts.rightContext.width ?? 0) - opts.padding,
         y: 0,
         width: opts.rightContext.width ?? 0,
         height: opts.bannerHeight,

@@ -8,10 +8,10 @@ export type PyramidPath = number[][];
 
 export function generatePaths(pyramid:PyramidObject, context:PyramidContext, opts:FoundationOptions):PyramidPath[] {
 
-    let padding = utils.getPadding(opts);
+    let padding = opts.padding;
     let pathGutter = utils.getPathGutter(opts);
     let channel = utils.getPathChannel(opts);
-    let bannerHeight = utils.getBannerHeight(opts);
+    let bannerHeight = opts.bannerHeight;
 
     let paths = [];
     for (let i = 0; i < opts.pyramidLevels; i++) {
@@ -85,7 +85,6 @@ export function renderPaths(paths:PyramidPath[], opts:FoundationOptions) {
         let width = utils.getPathWidth(opts);
         let styleStr = `stroke-linejoin:round;fill:none;`;
         styleStr += `stroke-width:${width};`;
-        //styleStr += `stroke:${mix_hexes(opts.colors[i], "#000000")};`;
         styleStr += `stroke:${opts.pyramidColors[i]};`;
 
         let poly = document.createElementNS("http://www.w3.org/2000/svg", 'polyline');

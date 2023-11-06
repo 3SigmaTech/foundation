@@ -8,22 +8,26 @@ import json from '@rollup/plugin-json';
 
 // Mark all dependencies as external
 const pkg = JSON.parse(fs.readFileSync('./package.json', 'utf-8'));
-const external = Object.keys(pkg.dependencies || []);
+const external = Object.keys(pkg.dependencies || []).filter((d) => {
+    // Add any dependencies we want to include in our bundle here 
+    return [''].indexOf(d) > -1 ? false : true;
+});
 
 let base = {
     //input: './src/index.ts',
     input: './index.ts',
-    //input: './build/foundation.js',
     output: {
         format: 'esm',
         name: 'index',
     },
     plugins: [
-        resolve({ jsnext: true, main: true }),
-        //resolve({ extensions: ['.js', '.jsx', '.ts', '.tsx'], jsnext: true }),
-        // commonjs({
-        //     include: /node_modules/
-        // }),
+        resolve({
+            extensions: ['.js', '.jsx', '.ts', '.tsx'],
+            mainFields: ['module', 'main'],
+        }),
+        commonjs({
+            include: /node_modules/
+        }),
         json(),
         babel({
             extensions: ['.js', '.jsx', '.ts', '.tsx'],

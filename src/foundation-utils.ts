@@ -50,8 +50,9 @@ export type FoundationOptions = {
     pyramidWidth: number;
     pyramidHeight: number;
     bannerHeight: number;
-    pyramidColors: string[];
     maxTitleHeight: number;
+    pyramidLabel: string;
+    pyramidColors: string[];
     pyramidLevels: number; // set automatically
 
     racewayOffset: number;
@@ -92,23 +93,29 @@ export function getSVG(opts:FoundationOptions):Element {
     return svg;
 }
 
-export function getPadding(opts:FoundationOptions) {
-    return opts.padding;
+var _DEFS: Element | null = null;
+export function getDefs(opts: FoundationOptions): Element {
+    let defs: Element | null;
+    let svg = getSVG(opts);
+    if (_DEFS == null) {
+        defs = svg.getElementsByTagNameNS("http://www.w3.org/2000/svg", 'defs')[0];
+        if (defs == null || defs == undefined) {
+            defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+            svg.appendChild(defs);
+        }
+        _DEFS = defs;
+    } else {
+        defs = _DEFS;
+    }
+    return defs;
 }
 
-export function getBannerHeight(opts:FoundationOptions) {
-    return opts.bannerHeight;
-}
 
 export function getPyramidHeight(opts:FoundationOptions) {
     if (opts.pyramidHeight >= opts.height) {
-        return opts.height - 2 * getPadding(opts);
+        return opts.height - 2 * opts.padding;
     }
     return opts.pyramidHeight;
-}
-
-export function getPyramidWidth(opts:FoundationOptions) {
-    return opts.pyramidWidth;
 }
 
 export function getPathGutter(opts:FoundationOptions) {
