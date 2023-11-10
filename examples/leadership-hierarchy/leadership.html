@@ -84,6 +84,15 @@
         svg ul {
             margin-top: 0.25em;
         }
+        svg p.list-heading {
+            margin-bottom: 0;
+        }
+        svg li > strong {
+            display: none;
+        }
+        svg strong.label {
+            display: none;
+        }
 
         svg p.title {
             text-align: center;
@@ -94,7 +103,7 @@
 
         svg div.two-col {
             width: 49%;
-            font-size: 0.8em;
+            font-size: 0.9em;
         }
 
         svg div.two-col:first-of-type {
@@ -190,6 +199,7 @@
                         }
                     },{
                         label: "Loop",
+                        contextWidth: 1.5,
                         content: {
                             htmlFile: './raceway-contexts/5-loop.html'
                         }
