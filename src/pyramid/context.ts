@@ -167,10 +167,8 @@ export function renderContext(context:PyramidContext, opts:FoundationOptions) {
             textStyle: opts.labelStyle,
             padding: opts.padding
         });
-        tBox.background.setAttribute("fill", `${mix_hexes(opts.pyramidColors[i], mix_hexes(opts.pyramidColors[i], "#000000"))}`);
-        if (!opts.useFlatColors) {
-            tBox.background.setAttribute('filter', `url(#big-blur)`);
-        }
+        tBox.background.setAttribute('fill', 'none');
+        tBox.group.setAttribute('filter', `url(#outline-pyramid-${i})`);
 
     }
 

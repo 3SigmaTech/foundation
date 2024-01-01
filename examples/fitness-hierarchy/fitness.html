@@ -3,8 +3,13 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <title>Leadership Hierarchy</title>
+    <title>Fitness Hierarchy</title>
     <link rel="stylesheet" href="../styles.css"></link>
+    <style>
+        svg foreignObject {
+            overflow-y: scroll;
+        }
+    </style>
 
     <script type="module">
         import * as foundation from '../foundation.js';
@@ -12,80 +17,82 @@
             let sample = {
                 pyramid:[
                     {
-                        label: "Transcendence",
-                        row: 2, contextWidth: 2,
+                        label: "Agency",
+                        row: 2, contextWidth: 1,
                         content: {
-                            htmlFile: './pyramid-contexts/8-transcendence.html'
+                            htmlFile: './pyramid-contexts/8-agency.html'
                         }
                     },{
-                        label: "Actualization",
-                        row: 2, contextWidth: 2,
+                        label: "Hypertrophy",
+                        row: 2, contextWidth: 1.5,
                         content: {
-                            htmlFile: './pyramid-contexts/7-actualization.html'
+                            htmlFile: './pyramid-contexts/7-hypertrophy.html'
                         }
                     },{
-                        label: "Aesthetic",
+                        label: "Supplementation",
+                        row: 2, contextWidth: 1.5,
+                        content: {
+                            htmlFile: './pyramid-contexts/6-supplementation.html'
+                        }
+                    },{
+                        label: "Mobility",
                         row: 2,
                         content: {
-                            htmlFile: './pyramid-contexts/6-aesthetic.html'
+                            htmlFile: './pyramid-contexts/5-mobility.html'
                         }
                     },{
-                        label: "Cognitive",
-                        row: 2,
+                        label: "Substance Use",
+                        contextWidth: 1,
                         content: {
-                            htmlFile: './pyramid-contexts/5-cognitive.html'
+                            htmlFile: './pyramid-contexts/4-substance-use.html'
                         }
                     },{
-                        label: "Esteem",
-                        contextWidth: 2.2,
+                        label: "Walking",
                         content: {
-                            htmlFile: './pyramid-contexts/4-esteem.html'
+                            htmlFile: './pyramid-contexts/3-walking.html'
                         }
                     },{
-                        label: "Belonging",
+                        label: "Whole Foods",
                         content: {
-                            htmlFile: './pyramid-contexts/3-belonging.html'
+                            htmlFile: './pyramid-contexts/2-whole-foods.html'
                         }
                     },{
-                        label: "Safety",
+                        label: "Rest",
                         content: {
-                            htmlFile: './pyramid-contexts/2-safety.html'
-                        }
-                    },{
-                        label: "Physiological",
-                        content: {
-                            htmlFile: './pyramid-contexts/1-physiological.html'
+                            htmlFile: './pyramid-contexts/1-rest.html'
                         }
                     }
                 ],
+                // Identity > Belief/Skill > Process/Progress > Behavior/Habit > Outcome
+                // Obvious > Attractive > Easy > Satisfying
                 raceway: [
                     {
-                        label: "Observe",
+                        label: "Identity",
                         contextWidth: 1,
                         content: {
-                            htmlFile: './raceway-contexts/1-observe.html'
+                            htmlFile: './raceway-contexts/1-identity.html'
                         }
                     },{
-                        label: "Orient",
+                        label: "Belief / Skill",
                         content: {
-                            htmlFile: './raceway-contexts/2-orient.html'
+                            htmlFile: './raceway-contexts/2-skill.html'
                         }
                     },{
-                        label: "Decide",
+                        label: "Process / Progress",
                         content: {
-                            htmlFile: './raceway-contexts/3-decide.html'
+                            htmlFile: './raceway-contexts/3-process.html'
                         }
                     },{
-                        label: "Act",
-                        contextWidth: 1.5,
+                        label: "Behavior / Habit",
+                        contextWidth: 1,
                         content: {
-                            htmlFile: './raceway-contexts/4-act.html'
+                            htmlFile: './raceway-contexts/4-behavior.html'
                         }
                     },{
-                        label: "Loop",
-                        contextWidth: 1.5,
+                        label: "Outcome",
+                        contextWidth: 1,
                         content: {
-                            htmlFile: './raceway-contexts/5-loop.html'
+                            htmlFile: './raceway-contexts/5-outcome.html'
                         }
                     }
                 ]
@@ -96,7 +103,7 @@
                 width: 2245, // 594mm --> A2 Paper Size
                 height: 1587, // 420mm
                 title: {
-                    text: 'Hierarchy of Leadership',
+                    text: 'Hierarchy of Fitness',
                     labelStyle: 'fill:#ffffff;stroke:#000000;stroke-width:0.25px;font-size:5em;font-family:Iceland;',
                     style: 'fill:#999999;'
                 },
@@ -112,10 +119,10 @@
                         htmlFile: './title-contexts/banner-right.html'
                     }
                 },
-                pyramidLabel: `Maslow's Hierarchy of Needs`,
-                racewayLabel: 'OODA Loop',
-                startColor: '#127171',
-                endColor: '#09E3E3'
+                pyramidLabel: `Lucus's Hierarchy of Fitness`,
+                racewayLabel: 'Goal Setting Framework',
+                startColor: '#CC4400',
+                endColor:'#FF6600'
             }
             let billboard = foundation.render(sample, opts);
         })();

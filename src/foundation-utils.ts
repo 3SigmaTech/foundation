@@ -73,6 +73,9 @@ export type FoundationOptions = {
     showLabels: boolean;
     labelStyle: string;
     useFlatColors: boolean;
+    // Use start and end color to define a gradient for pyramid and raceway
+    startColor: string;
+    endColor: string;
     [index: string]: any;
 };
 

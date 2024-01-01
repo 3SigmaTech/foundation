@@ -338,10 +338,8 @@ function _renderRacewaySections(raceway: RacewayObject, opts: FoundationOptions)
             textStyle: opts.labelStyle,
             padding: opts.padding
         });
-        tBox.background.setAttribute("fill", `${mix_hexes(opts.racewayColors[i], mix_hexes(opts.racewayColors[i], "#000000"))}`);
-        if (!opts.useFlatColors) {
-            tBox.background.setAttribute('filter', `url(#big-blur)`);
-        }
+        tBox.background.setAttribute('fill', 'none');
+        tBox.group.setAttribute('filter', `url(#outline-raceway-${i})`);
     }
 }
 

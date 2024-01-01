@@ -1,0 +1,127 @@
+@font-face {
+    font-family: "Capella";
+    src: url('./fonts/capella.ttf');
+}
+
+@font-face {
+    font-family: "Capella Expanded";
+    src: url('./fonts/capellaexpand.ttf');
+}
+
+@font-face {
+    font-family: "Iceland";
+    src: url('./fonts/iceland-regular.ttf');
+}
+
+@font-face {
+    font-family: "Quantico";
+    src: url('./fonts/quantico-regular.ttf');
+}
+
+@font-face {
+    font-family: "Nunito";
+    src: url('./fonts/nunito.ttf');
+}
+
+@page {
+    size: A2;
+    margin: 0;
+}
+
+@media print {
+
+    html,
+    body {
+        width: 594mm;
+        height: 420mm;
+    }
+}
+
+html,
+body {
+    width: 594mm;
+    height: 420mm;
+    font-family: Nunito;
+    font-size: 0.95em;
+}
+
+svg text {
+    text-anchor: middle;
+    dominant-baseline: middle;
+}
+
+svg text.uncentered {
+    text-anchor: unset;
+    dominant-baseline: middle;
+}
+
+svg>g>svg text {
+    text-anchor: unset;
+    dominant-baseline: unset;
+}
+
+svg div.context-body {
+    margin: 0.5em;
+    margin-bottom: 0;
+}
+
+svg div.banner-context-body {
+    margin: 1em 0.5em 0.5em 0;
+    font-size: 0.8em;
+    color: #ffffff;
+}
+
+svg div.banner-context-body p {
+    margin: 0.5em;
+}
+
+svg ul {
+    margin-top: 0.25em;
+}
+svg .tight {
+    margin-top: 0.25em;
+    margin-bottom: 0.25em;
+}
+
+svg p.list-heading {
+    margin-bottom: 0;
+}
+
+svg li>strong {
+    display: none;
+}
+
+svg strong.label {
+    display: none;
+}
+
+svg p.title {
+    text-align: center;
+    text-decoration: underline;
+    font-weight: bold;
+    margin: 0;
+}
+
+svg div.two-col {
+    width: 49%;
+    font-size: 0.9em;
+}
+
+svg div.two-col:first-of-type {
+    float: left;
+    margin-right: 1%;
+}
+
+svg div.two-col:last-of-type {
+    float: right;
+    margin-left: 1%;
+}
+
+ul {
+    padding-inline-start: 1.5em;
+}
+
+/* TEMP STYLING */
+svg {
+    border: 1px solid black;
+}

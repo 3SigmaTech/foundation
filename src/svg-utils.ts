@@ -13,7 +13,7 @@ export function embedContent(opts: FoundationEmbeddedContent) {
 
     if (opts.content.htmlFile) {
         fetch(opts.content.htmlFile)
-            .then((response) => { return response.text() })
+            .then((response) => { return (response.ok ? response.text() : ''); })
             .then((html) => {
                 fx.innerHTML = html;
                 opts.svg.appendChild(fx);

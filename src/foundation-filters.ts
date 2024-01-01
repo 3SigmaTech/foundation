@@ -18,6 +18,9 @@ export function renderFilters(opts:FoundationOptions, defelement:Element) {
         let faintOuterGlow = _createFaintOuterGlow(i, mix_hexes('#ffffff', opts.pyramidColors[i]), 'pyramid');
         defelement.appendChild(faintOuterGlow);
 
+        let textOutline = _defineOutline(`outline-pyramid-${i}`, mix_hexes('#000000', opts.pyramidColors[i]));
+        defelement.appendChild(textOutline);
+
         // let outerGlow = _createOuterGlow(i, opts.pyramidColors[i], 'pyramid');
         // defelement.appendChild(outerGlow);
     }
@@ -30,6 +33,10 @@ export function renderFilters(opts:FoundationOptions, defelement:Element) {
         let faintOuterGlow = _createFaintOuterGlow(i, mix_hexes('#ffffff', opts.racewayColors[i]), 'raceway');
         defelement.appendChild(faintOuterGlow);
 
+        let textOutline = _defineOutline(`outline-raceway-${i}`, mix_hexes('#000000', opts.racewayColors[i]));
+        defelement.appendChild(textOutline);
+
+
         // let outerGlow = _createOuterGlow(i, opts.racewayColors[i], 'pyramid');
         // defelement.appendChild(outerGlow);
     }
@@ -38,7 +45,6 @@ export function renderFilters(opts:FoundationOptions, defelement:Element) {
 }
 
 
-// @ts-ignore
 function _createInnerGlow(index:number|null, color:string, collection:string|null) {
 
     let innerGlow = document.createElementNS("http://www.w3.org/2000/svg", 'filter');
@@ -201,8 +207,55 @@ function _appendOneOffs(_opts:FoundationOptions, defelement:Element) {
     blur.appendChild(feComposite);
     defelement.appendChild(blur);
 
-
+    defelement.appendChild(_defineOutline());
     defelement.appendChild(_defineEmboss());
+}
+
+function _defineOutline(id:string = 'dark-outline', color:string = '#000000') {
+
+    let outline = document.createElementNS("http://www.w3.org/2000/svg", 'filter');
+    outline.setAttribute('id', id);
+    outline.setAttribute('color-interpolation-filters', 'sRGB');
+    outline.setAttribute('x', `-50%`);
+    outline.setAttribute('y', `-50%`);
+    outline.setAttribute('width', `200%`);
+    outline.setAttribute('height', `200%`);
+
+    let feMorphology = document.createElementNS("http://www.w3.org/2000/svg", 'feMorphology');
+    feMorphology.setAttribute('operator', "dilate");
+    feMorphology.setAttribute('radius', "0.75");
+    feMorphology.setAttribute('in', "SourceGraphic");
+    feMorphology.setAttribute('result', "inflated");
+    outline.appendChild(feMorphology);
+
+    let feFlood = document.createElementNS("http://www.w3.org/2000/svg", 'feFlood');
+    feFlood.setAttribute('flood-color', color);
+    if (color == '#000000') {
+        //feFlood.setAttribute('flood-opacity', '0.5');
+    }
+    feFlood.setAttribute('result', 'blackFlood');
+    outline.appendChild(feFlood);
+
+    let feComposite = document.createElementNS("http://www.w3.org/2000/svg", 'feComposite');
+    feComposite.setAttribute('in', 'blackFlood');
+    feComposite.setAttribute('in2', 'inflated');
+    feComposite.setAttribute('operator', 'in');
+    feComposite.setAttribute('result', 'outline');
+    outline.appendChild(feComposite);
+
+    let feMerge = document.createElementNS("http://www.w3.org/2000/svg", 'feMerge');
+
+    let feMergeNode = document.createElementNS("http://www.w3.org/2000/svg", 'feMergeNode');
+    feMergeNode.setAttribute('in', 'outline');
+    let feMergeNode2 = document.createElementNS("http://www.w3.org/2000/svg", 'feMergeNode');
+    feMergeNode2.setAttribute('in', 'SourceGraphic');
+
+    feMerge.appendChild(feMergeNode);
+    feMerge.appendChild(feMergeNode2);
+    outline.appendChild(feMerge);
+
+
+    return outline;
 }
 
 function _defineEmboss() {

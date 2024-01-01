@@ -7,6 +7,7 @@ import { generatePaths, renderPaths } from './pyramid/paths';
 import { renderFilters } from './foundation-filters';
 import { renderBanner } from './foundation-banner';
 import { generateRaceway, renderRaceway } from './raceway/object';
+import { hex_gradient_rgb } from './color-mixer';
 
 export function render(data:FoundationData, opts: FoundationOptions) {
   return _render(data, opts);
@@ -59,6 +60,8 @@ function _defaultOpts():FoundationOptions {
             //peachpuff
             '#ffdab9'
         ],
+        // Alternate mixed color scheme
+        //pyramidColors: ['#FF6E02', '#BFF800', '#00F006', '#00E9BF', '#0057E2', '#5A00DB', '#D300A8', '#CC0000'],
         pyramidLevels: 0,
 
         racewayOffset: 20,
@@ -79,8 +82,9 @@ function _defaultOpts():FoundationOptions {
             '#00cc00',
             //blue
             '#0000ff',
-
         ],
+        // Alternate mixed color scheme
+        //racewayColors: ['#FF6E02', '#2AF200', '#00B4E6', '#8400D9', '#CC0000']
         racewayLevels: 0,
 
         // tooltip: true,
@@ -90,7 +94,9 @@ function _defaultOpts():FoundationOptions {
         // hover: true,
         // hoverCallbackRenderer: _defaultHoverCallbackRenderer /*  */,
         showLabels: true,
-        labelStyle: "fill:#ffffff;stroke:#000000;stroke-width:0px;",
+        labelStyle: "fill:#ffffff;",
+        startColor: '',
+        endColor: '',
         useFlatColors: false
     };
 }
@@ -170,9 +176,21 @@ function _validateData(data:FoundationData, _opts:FoundationOptions):FoundationD
 }
 
 function _validateOptions(opts:FoundationOptions):string|null {
+    let defaultOpts = _defaultOpts();
     if (opts.container == null) {
         return 'You must set a container SVG tag using opts.container';
     }
+
+    // Check if start and end color are defined and use as necessary
+    if (opts.startColor && opts.endColor) {
+        if (opts.pyramidColors.toString() == defaultOpts.pyramidColors.toString()) {
+            opts.pyramidColors = hex_gradient_rgb(opts.startColor, opts.endColor, opts.pyramidLevels);
+        }
+        if (opts.racewayColors.toString() == defaultOpts.racewayColors.toString()) {
+            opts.racewayColors = hex_gradient_rgb(opts.startColor, opts.endColor, opts.racewayLevels);
+        }
+    }
+
     return null;
 }
 

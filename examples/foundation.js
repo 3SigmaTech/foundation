@@ -58,7 +58,7 @@ function embedContent(opts) {
   }
   if (opts.content.htmlFile) {
     fetch(opts.content.htmlFile).then(response => {
-      return response.text();
+      return response.ok ? response.text() : '';
     }).then(html => {
       fx.innerHTML = html;
       opts.svg.appendChild(fx);
@@ -185,7 +185,8 @@ function drawFilledPath(opts) {
 function hex2dec(hex) {
   let breakdown = hex.replace('#', '').match(/.{2}/g);
   breakdown = breakdown == null ? ['0', '0', '0'] : breakdown;
-  return breakdown.map(n => parseInt(n, 16));
+  let dec = breakdown.map(n => parseInt(n, 16));
+  return dec;
 }
 function rgb2hex(r, g, b) {
   r = Math.round(r);
@@ -234,11 +235,34 @@ function mix_hexes() {
     hexes[_key3] = arguments[_key3];
   }
   let rgbs = hexes.map(hex => hex2dec(hex));
-  let cmyks = rgbs.map(rgb => rgb2cmyk(rgb[0], rgb[1], rgb[2]));
+  let cmyks = rgbs.map(rgb => rgb2cmyk(...rgb));
   let mix_cmyk = mix_cmyks(...cmyks);
-  let mix_rgb = cmyk2rgb(mix_cmyk[0], mix_cmyk[1], mix_cmyk[2], mix_cmyk[3]);
-  let mix_hex = rgb2hex(mix_rgb[0], mix_rgb[1], mix_rgb[2]);
+  let mix_rgb = cmyk2rgb(...mix_cmyk);
+  let mix_hex = rgb2hex(...mix_rgb);
   return mix_hex;
+}
+function gradient_rgb(rgb1, rgb2, numColors) {
+  let gradient = [];
+  for (let i = 0; i < numColors; i++) {
+    let newC = [0, 0, 0];
+    for (let c = 0; c < 3; c++) {
+      newC[c] = rgb1[c] + i * (rgb2[c] - rgb1[c]) / (numColors - 1);
+    }
+    gradient.push([...newC]);
+  }
+  gradient[numColors - 1] = rgb2;
+  return gradient;
+}
+function hex_gradient_rgb(hex1, hex2, numColors) {
+  let rgb1 = hex2dec(hex1);
+  let rgb2 = hex2dec(hex2);
+  let grad = gradient_rgb(rgb1, rgb2, numColors);
+  let gradient = [];
+  for (let c = 0; c < grad.length; c++) {
+    gradient.push(rgb2hex(...grad[c]));
+  }
+  gradient[numColors - 1] = hex2;
+  return gradient;
 }
 
 function generatePyramid(data, opts) {
@@ -313,10 +337,8 @@ function renderPyramid(pyramid, opts) {
       textStyle: opts.labelStyle,
       padding: opts.padding
     });
-    tBox.background.setAttribute("fill", `${mix_hexes(opts.pyramidColors[i], mix_hexes(opts.pyramidColors[i], "#000000"))}`);
-    if (!opts.useFlatColors) {
-      tBox.background.setAttribute('filter', `url(#big-blur)`);
-    }
+    tBox.background.setAttribute('fill', 'none');
+    tBox.group.setAttribute('filter', `url(#outline-pyramid-${i})`);
   }
   styleStr = opts.labelStyle;
   styleStr += `letter-spacing:0.05em;`;
@@ -462,10 +484,8 @@ function renderContext(context, opts) {
       textStyle: opts.labelStyle,
       padding: opts.padding
     });
-    tBox.background.setAttribute("fill", `${mix_hexes(opts.pyramidColors[i], mix_hexes(opts.pyramidColors[i], "#000000"))}`);
-    if (!opts.useFlatColors) {
-      tBox.background.setAttribute('filter', `url(#big-blur)`);
-    }
+    tBox.background.setAttribute('fill', 'none');
+    tBox.group.setAttribute('filter', `url(#outline-pyramid-${i})`);
   }
   for (let i = 0; i < context.bodies.length; i++) {
     let styleStr = 'stroke-width:1;';
@@ -542,10 +562,14 @@ function renderFilters(opts, defelement) {
   for (let i = 0; i < opts.pyramidColors.length; i++) {
     let faintOuterGlow = _createFaintOuterGlow(i, mix_hexes('#ffffff', opts.pyramidColors[i]), 'pyramid');
     defelement.appendChild(faintOuterGlow);
+    let textOutline = _defineOutline(`outline-pyramid-${i}`, mix_hexes('#000000', opts.pyramidColors[i]));
+    defelement.appendChild(textOutline);
   }
   for (let i = 0; i < opts.racewayColors.length; i++) {
     let faintOuterGlow = _createFaintOuterGlow(i, mix_hexes('#ffffff', opts.racewayColors[i]), 'raceway');
     defelement.appendChild(faintOuterGlow);
+    let textOutline = _defineOutline(`outline-raceway-${i}`, mix_hexes('#000000', opts.racewayColors[i]));
+    defelement.appendChild(textOutline);
   }
   _appendOneOffs(opts, defelement);
 }
@@ -636,7 +660,44 @@ function _appendOneOffs(_opts, defelement) {
   feComposite.setAttribute('in2', 'SourceGraphic');
   blur.appendChild(feComposite);
   defelement.appendChild(blur);
+  defelement.appendChild(_defineOutline());
   defelement.appendChild(_defineEmboss());
+}
+function _defineOutline() {
+  let id = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'dark-outline';
+  let color = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '#000000';
+  let outline = document.createElementNS("http://www.w3.org/2000/svg", 'filter');
+  outline.setAttribute('id', id);
+  outline.setAttribute('color-interpolation-filters', 'sRGB');
+  outline.setAttribute('x', `-50%`);
+  outline.setAttribute('y', `-50%`);
+  outline.setAttribute('width', `200%`);
+  outline.setAttribute('height', `200%`);
+  let feMorphology = document.createElementNS("http://www.w3.org/2000/svg", 'feMorphology');
+  feMorphology.setAttribute('operator', "dilate");
+  feMorphology.setAttribute('radius', "0.75");
+  feMorphology.setAttribute('in', "SourceGraphic");
+  feMorphology.setAttribute('result', "inflated");
+  outline.appendChild(feMorphology);
+  let feFlood = document.createElementNS("http://www.w3.org/2000/svg", 'feFlood');
+  feFlood.setAttribute('flood-color', color);
+  feFlood.setAttribute('result', 'blackFlood');
+  outline.appendChild(feFlood);
+  let feComposite = document.createElementNS("http://www.w3.org/2000/svg", 'feComposite');
+  feComposite.setAttribute('in', 'blackFlood');
+  feComposite.setAttribute('in2', 'inflated');
+  feComposite.setAttribute('operator', 'in');
+  feComposite.setAttribute('result', 'outline');
+  outline.appendChild(feComposite);
+  let feMerge = document.createElementNS("http://www.w3.org/2000/svg", 'feMerge');
+  let feMergeNode = document.createElementNS("http://www.w3.org/2000/svg", 'feMergeNode');
+  feMergeNode.setAttribute('in', 'outline');
+  let feMergeNode2 = document.createElementNS("http://www.w3.org/2000/svg", 'feMergeNode');
+  feMergeNode2.setAttribute('in', 'SourceGraphic');
+  feMerge.appendChild(feMergeNode);
+  feMerge.appendChild(feMergeNode2);
+  outline.appendChild(feMerge);
+  return outline;
 }
 function _defineEmboss() {
   let emboss = document.createElementNS("http://www.w3.org/2000/svg", 'filter');
@@ -987,10 +1048,8 @@ function _renderRacewaySections(raceway, opts) {
       textStyle: opts.labelStyle,
       padding: opts.padding
     });
-    tBox.background.setAttribute("fill", `${mix_hexes(opts.racewayColors[i], mix_hexes(opts.racewayColors[i], "#000000"))}`);
-    if (!opts.useFlatColors) {
-      tBox.background.setAttribute('filter', `url(#big-blur)`);
-    }
+    tBox.background.setAttribute('fill', 'none');
+    tBox.group.setAttribute('filter', `url(#outline-raceway-${i})`);
   }
 }
 function _renderRacewayTrack(raceway, opts) {
@@ -1073,7 +1132,9 @@ function _defaultOpts() {
     racewayColors: ['#2f4f4f', '#00ced1', '#c71585', '#00cc00', '#0000ff'],
     racewayLevels: 0,
     showLabels: true,
-    labelStyle: "fill:#ffffff;stroke:#000000;stroke-width:0px;",
+    labelStyle: "fill:#ffffff;",
+    startColor: '',
+    endColor: '',
     useFlatColors: false
   };
 }
@@ -1145,8 +1206,17 @@ function _validateData(data, _opts) {
   return privateData;
 }
 function _validateOptions(opts) {
+  let defaultOpts = _defaultOpts();
   if (opts.container == null) {
     return 'You must set a container SVG tag using opts.container';
+  }
+  if (opts.startColor && opts.endColor) {
+    if (opts.pyramidColors.toString() == defaultOpts.pyramidColors.toString()) {
+      opts.pyramidColors = hex_gradient_rgb(opts.startColor, opts.endColor, opts.pyramidLevels);
+    }
+    if (opts.racewayColors.toString() == defaultOpts.racewayColors.toString()) {
+      opts.racewayColors = hex_gradient_rgb(opts.startColor, opts.endColor, opts.racewayLevels);
+    }
   }
   return null;
 }
